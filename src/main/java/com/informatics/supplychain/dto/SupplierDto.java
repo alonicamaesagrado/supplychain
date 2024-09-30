@@ -3,7 +3,7 @@ package com.informatics.supplychain.dto;
 import com.informatics.supplychain.enums.StatusEnum;
 import lombok.Getter;
 import lombok.Setter;
-import com.informatics.supplychain.model.User;
+import com.informatics.supplychain.model.Supplier;
 
 /**
  *
@@ -13,24 +13,24 @@ import com.informatics.supplychain.model.User;
 @Getter
 @Setter
 
-public class UserDto {
-    public String usercode;
-    public String password;
-    public String first_name;
-    public String last_name;
+public class SupplierDto {
+    public String code;
+    public String name;
+    public String address;
+    public String company;
     public StatusEnum status;
     
-    public UserDto() {
+    public SupplierDto() {
         
     }
     
-    public UserDto(User user) {
-        if (user != null) {
-            usercode = user.getUsercode();
-            password = user.getPassword();
-            first_name = user.getFirst_name();
-            last_name = user.getLast_name();
-            status = user.getStatus();
+    public SupplierDto(Supplier supplier) {
+        if (supplier != null) {
+            code = supplier.getCode();
+            name = supplier.getName();
+            address = supplier.getAddress();
+            company = supplier.getCompany();
+            status = supplier.getStatus();
         }
     }
 }

@@ -2,8 +2,8 @@ package com.informatics.supplychain.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import com.informatics.supplychain.enums.StatusEnum;
-import com.informatics.supplychain.model.User;
-import com.informatics.supplychain.repository.UserRepository;
+import com.informatics.supplychain.model.Supplier;
+import com.informatics.supplychain.repository.SupplierRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -14,20 +14,20 @@ import org.springframework.stereotype.Service;
  */
 
 @Service
-public class UserService {
+public class SupplierService {
 
     @Autowired
-    UserRepository userRepository;
+    SupplierRepository supplierRepository;
 
-    public User findByUserCodeAndStatus(String usercode, StatusEnum status) {
-        return userRepository.findByUsercodeAndStatus(usercode, status);
+    public Supplier findByCodeAndStatus(String code, StatusEnum status) {
+        return supplierRepository.findByCodeAndStatus(code, status);
     }
     
-    public List<User> findAll(){
-      return userRepository.findAll();
+    public List<Supplier> findAll(){
+      return supplierRepository.findAll();
     }
     
-    public User save(User user){
-       return userRepository.save(user);
+    public Supplier save(Supplier supplier){
+       return supplierRepository.save(supplier);
     }
 }

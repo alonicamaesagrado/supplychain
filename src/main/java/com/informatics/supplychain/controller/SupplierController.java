@@ -1,9 +1,9 @@
 package com.informatics.supplychain.controller;
 
-import com.informatics.supplychain.dto.UserDto;
+import com.informatics.supplychain.dto.SupplierDto;
 import com.informatics.supplychain.enums.StatusEnum;
-import com.informatics.supplychain.model.User;
-import com.informatics.supplychain.service.UserService;
+import com.informatics.supplychain.model.Supplier;
+import com.informatics.supplychain.service.SupplierService;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,28 +22,28 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin
-public class UserController {
+public class SupplierController {
     @Autowired
-    UserService userService;
+    SupplierService supplierService;
     
-    @GetMapping("v1/user")
-    ResponseEntity<UserDto> getUser(@RequestParam String usercode) {
-        var user = userService.findByUserCodeAndStatus(usercode, StatusEnum.ACTIVE);
-        return ResponseEntity.ok(new UserDto(user));
+    @GetMapping("v1/supplier/get")
+    ResponseEntity<SupplierDto> getSupplier(@RequestParam String code) {
+        var supplier = supplierService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
+        return ResponseEntity.ok(new SupplierDto(supplier));
     } 
     
-    @GetMapping("v1/userlist")
-    ResponseEntity<List<UserDto>> getUserList() {
-        return ResponseEntity.ok(userService.findAll().stream().map(e -> new UserDto(e)).collect(Collectors.toList()));
+    @GetMapping("v1/supplierList")
+    ResponseEntity<List<SupplierDto>> getSupplierList() {
+        return ResponseEntity.ok(supplierService.findAll().stream().map(e -> new SupplierDto(e)).collect(Collectors.toList()));
     } 
     
-    @PostMapping("v1/user")
-    ResponseEntity<UserDto> saveUser(@RequestBody UserDto userDto) {
-        var user = new User();
-        user.setUsercode(userDto.getUsercode());
-        user.setPassword(userDto.getPassword());
-        user.setFirst_name(userDto.getFirst_name());
-        user.setLast_name(userDto.getLast_name());
-        return ResponseEntity.ok(new UserDto(userService.save(user)));
+    @PostMapping("v1/supplier")
+    ResponseEntity<SupplierDto> saveSupplier(@RequestBody SupplierDto supplierDto) {
+        var supplier = new Supplier();
+        supplier.setCode(supplierDto.getCode());
+        supplier.setName(supplierDto.getName());
+        supplier.setAddress(supplierDto.getAddress());
+        supplier.setCompany(supplierDto.getCompany());
+        return ResponseEntity.ok(new SupplierDto(supplierService.save(supplier)));
     }
 }

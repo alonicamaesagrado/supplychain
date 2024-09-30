@@ -1,7 +1,7 @@
 package com.informatics.supplychain.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.informatics.supplychain.dto.UserDto;
+import com.informatics.supplychain.dto.SupplierDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +23,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class User {
+public class Supplier {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,24 +31,21 @@ public class User {
     @Column(insertable = true, updatable = false)
     protected Integer id;
     @NotBlank(message = "Value required for code.")
-    private String usercode;
-    @NotBlank(message = "Value required for password.")
-    private String password;
-    @NotBlank(message = "Value required for first name.")
-    private String first_name;
-    @NotBlank(message = "Value required for last name.")
-    private String last_name;
+    private String code;
+    @NotBlank(message = "Value required for name.")
+    private String name;
+    private String address;
+    private String company;
+    private String terms;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     
-    public User() {
+    public Supplier() {
         status = StatusEnum.ACTIVE;
     }
  
-    public User(UserDto dto) {
-        usercode = dto.getUsercode();
-        password = dto.getPassword();
-        first_name = dto.getFirst_name();
-        last_name = dto.getLast_name();
+    public Supplier(SupplierDto dto) {
+        code = dto.getCode();
+        name = dto.getName();
     }
 }

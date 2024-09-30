@@ -1,7 +1,7 @@
-package repository;
+package com.informatics.supplychain.repository;
 
-import enums.StatusEnum;
-import model.User;
+import com.informatics.supplychain.enums.StatusEnum;
+import com.informatics.supplychain.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -11,5 +11,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserRepository extends JpaRepository<User, Integer>{
     
     
-    public User findByUserCodeAndStatus(String userCode, StatusEnum status);
+    public User findByUsercodeAndStatus(String usercode, StatusEnum status);
 }

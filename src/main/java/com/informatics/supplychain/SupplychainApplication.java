@@ -1,13 +1,13 @@
-package com.informatics.suppychain;
+package com.informatics.supplychain;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SuppychainApplication {
+public class SupplychainApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SuppychainApplication.class, args);
+		SpringApplication.run(SupplychainApplication.class, args);
 	}
 
 }

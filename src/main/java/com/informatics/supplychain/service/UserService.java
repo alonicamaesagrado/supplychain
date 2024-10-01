@@ -7,12 +7,6 @@ import com.informatics.supplychain.repository.UserRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
-
-/**
- *
- * @author nica
- */
-
 @Service
 public class UserService {
 

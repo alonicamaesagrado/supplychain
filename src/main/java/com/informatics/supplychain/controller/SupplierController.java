@@ -15,10 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- *
- * @author nica
- */
 
 @RestController
 @CrossOrigin
@@ -26,7 +22,7 @@ public class SupplierController {
     @Autowired
     SupplierService supplierService;
     
-    @GetMapping("v1/supplier/get")
+    @GetMapping("v1/supplier")
     ResponseEntity<SupplierDto> getSupplier(@RequestParam String code) {
         var supplier = supplierService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
         return ResponseEntity.ok(new SupplierDto(supplier));

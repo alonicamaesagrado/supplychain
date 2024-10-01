@@ -3,34 +3,38 @@ package com.informatics.supplychain.dto;
 import com.informatics.supplychain.enums.StatusEnum;
 import lombok.Getter;
 import lombok.Setter;
-import com.informatics.supplychain.model.Supplier;
+import com.informatics.supplychain.model.Item;
 
-/**
- *
- * @author nica
- */
 
 @Getter
 @Setter
 
-public class SupplierDto {
+public class ItemDto {
     public String code;
-    public String name;
-    public String address;
-    public String company;
+    public String description;
+    public String category;
+    public String brand;
+    public String unit;
+    public Double reorderPoint;
+    public Double price;
+    public Double cost;
     public StatusEnum status;
     
-    public SupplierDto() {
+    public ItemDto() {
         
     }
     
-    public SupplierDto(Supplier supplier) {
-        if (supplier != null) {
-            code = supplier.getCode();
-            name = supplier.getName();
-            address = supplier.getAddress();
-            company = supplier.getCompany();
-            status = supplier.getStatus();
+    public ItemDto(Item entity) {
+        if (entity != null) {
+            code = entity.getCode();
+            description = entity.getDescription();
+            category = entity.getCategory();
+            brand = entity.getBrand();
+            unit = entity.getUnit();
+            reorderPoint = entity.getReorderPoint();
+            price = entity.getPrice();
+            cost = entity.getCost();
+            status = entity.getStatus();
         }
     }
 }

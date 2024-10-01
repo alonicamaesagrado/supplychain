@@ -1,15 +1,11 @@
 package com.informatics.supplychain.repository;
 
 import com.informatics.supplychain.enums.StatusEnum;
-import com.informatics.supplychain.model.Supplier;
+import com.informatics.supplychain.model.UserGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
- *
- * @author nica
- */
-public interface SupplierRepository extends JpaRepository<Supplier, Integer>{
+public interface UserGroupRepository extends JpaRepository<UserGroup, Integer>{
     
     
-    public Supplier findByCodeAndStatus(String code, StatusEnum status);
+    public UserGroup findByCodeAndStatus(String code, StatusEnum status);
 }

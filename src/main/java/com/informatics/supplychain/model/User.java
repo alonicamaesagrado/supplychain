@@ -10,15 +10,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- *
- * @author nica
- */
 @Data
 @Getter
 @Setter
@@ -38,6 +36,11 @@ public class User {
     private String first_name;
     @NotBlank(message = "Value required for last name.")
     private String last_name;
+    
+    @JoinColumn
+    @ManyToOne
+    private UserGroup userGroup;
+    
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     
@@ -50,5 +53,8 @@ public class User {
         password = dto.getPassword();
         first_name = dto.getFirst_name();
         last_name = dto.getLast_name();
+        if (dto.getUserGroup()!= null) {
+            userGroup = new UserGroup(dto.getUserGroup());
+        }
     }
 }

@@ -1,7 +1,7 @@
 package com.informatics.supplychain.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.informatics.supplychain.dto.SupplierDto;
+import com.informatics.supplychain.dto.UserGroupDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,15 +15,11 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- *
- * @author nica
- */
 @Data
 @Getter
 @Setter
 @Entity
-public class Supplier {
+public class UserGroup {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,20 +28,20 @@ public class Supplier {
     protected Integer id;
     @NotBlank(message = "Value required for code.")
     private String code;
-    @NotBlank(message = "Value required for name.")
-    private String name;
-    private String address;
-    private String company;
-    private String terms;
+    private Boolean isAdmin;
+    private Boolean isCreator;
+    private Boolean isEditor;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     
-    public Supplier() {
+    public UserGroup() {
         status = StatusEnum.ACTIVE;
     }
  
-    public Supplier(SupplierDto dto) {
+    public UserGroup(UserGroupDto dto) {
         code = dto.getCode();
-        name = dto.getName();
+        isAdmin = dto.getIsAdmin();
+        isCreator = dto.getIsCreator();
+        isEditor = dto.getIsEditor();
     }
 }

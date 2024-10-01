@@ -1,7 +1,7 @@
 package com.informatics.supplychain.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.informatics.supplychain.dto.SupplierDto;
+import com.informatics.supplychain.dto.ItemDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,15 +15,11 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- *
- * @author nica
- */
 @Data
 @Getter
 @Setter
 @Entity
-public class Supplier {
+public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,20 +28,29 @@ public class Supplier {
     protected Integer id;
     @NotBlank(message = "Value required for code.")
     private String code;
-    @NotBlank(message = "Value required for name.")
-    private String name;
-    private String address;
-    private String company;
-    private String terms;
+    @NotBlank(message = "Value required for description.")
+    private String description;
+    private String category;
+    private String brand;
+    private String unit;
+    private Double reorderPoint;
+    private Double price;
+    private Double cost;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     
-    public Supplier() {
+    public Item() {
         status = StatusEnum.ACTIVE;
     }
  
-    public Supplier(SupplierDto dto) {
+    public Item(ItemDto dto) {
         code = dto.getCode();
-        name = dto.getName();
+        description = dto.getDescription();
+        category = dto.getCategory();
+        brand = dto.getBrand();
+        unit = dto.getUnit();
+        reorderPoint = dto.getReorderPoint();
+        price = dto.getPrice();
+        cost = dto.getCost();
     }
 }

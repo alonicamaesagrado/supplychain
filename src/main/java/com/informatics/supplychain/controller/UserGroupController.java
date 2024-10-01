@@ -1,11 +1,9 @@
 package com.informatics.supplychain.controller;
 
-import com.informatics.supplychain.dto.UserDto;
+import com.informatics.supplychain.dto.UserGroupDto;
 import com.informatics.supplychain.enums.StatusEnum;
-import com.informatics.supplychain.model.User;
-import com.informatics.supplychain.service.UserService;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.informatics.supplychain.model.UserGroup;
+import com.informatics.supplychain.service.UserGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -15,35 +13,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- *
- * @author nica
- */
 
 @RestController
 @CrossOrigin
-public class UserController {
+public class UserGroupController {
     @Autowired
-    UserService userService;
+    UserGroupService userGroupService;
     
-    @GetMapping("v1/user")
-    ResponseEntity<UserDto> getUser(@RequestParam String usercode) {
-        var user = userService.findByUserCodeAndStatus(usercode, StatusEnum.ACTIVE);
-        return ResponseEntity.ok(new UserDto(user));
-    } 
+    @GetMapping("v1/usergroup")
+    ResponseEntity<UserGroupDto> getUserGroup(@RequestParam String code) {
+        var userGroup = userGroupService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
+        return ResponseEntity.ok(new UserGroupDto(userGroup));
+    }
     
-    @GetMapping("v1/userlist")
-    ResponseEntity<List<UserDto>> getUserList() {
-        return ResponseEntity.ok(userService.findAll().stream().map(e -> new UserDto(e)).collect(Collectors.toList()));
-    } 
-    
-    @PostMapping("v1/user")
-    ResponseEntity<UserDto> saveUser(@RequestBody UserDto userDto) {
-        var user = new User();
-        user.setUsercode(userDto.getUsercode());
-        user.setPassword(userDto.getPassword());
-        user.setFirst_name(userDto.getFirst_name());
-        user.setLast_name(userDto.getLast_name());
-        return ResponseEntity.ok(new UserDto(userService.save(user)));
+    @PostMapping("v1/usergroup")
+    ResponseEntity<UserGroupDto> saveUserGroup(@RequestBody UserGroupDto userGroupDto) {
+        var userGroup = new UserGroup();
+        userGroup.setCode(userGroupDto.getCode());
+        userGroup.setIsAdmin(userGroupDto.getIsAdmin());
+        userGroup.setIsCreator(userGroupDto.getIsCreator());
+        userGroup.setIsEditor(userGroupDto.getIsEditor());
+        return ResponseEntity.ok(new UserGroupDto(userGroupService.save(userGroup)));
     }
 }

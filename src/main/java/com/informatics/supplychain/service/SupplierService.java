@@ -8,11 +8,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 
-/**
- *
- * @author nica
- */
-
 @Service
 public class SupplierService {
 

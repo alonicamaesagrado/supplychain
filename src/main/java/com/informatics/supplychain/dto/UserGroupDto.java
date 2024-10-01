@@ -3,34 +3,32 @@ package com.informatics.supplychain.dto;
 import com.informatics.supplychain.enums.StatusEnum;
 import lombok.Getter;
 import lombok.Setter;
-import com.informatics.supplychain.model.Supplier;
+import com.informatics.supplychain.model.UserGroup;
 
-/**
- *
- * @author nica
- */
 
 @Getter
 @Setter
 
-public class SupplierDto {
+public class UserGroupDto {
+    public Integer id;
     public String code;
-    public String name;
-    public String address;
-    public String company;
+    public Boolean isAdmin;
+    public Boolean isCreator;
+    public Boolean isEditor;
     public StatusEnum status;
     
-    public SupplierDto() {
+    public UserGroupDto() {
         
     }
     
-    public SupplierDto(Supplier supplier) {
-        if (supplier != null) {
-            code = supplier.getCode();
-            name = supplier.getName();
-            address = supplier.getAddress();
-            company = supplier.getCompany();
-            status = supplier.getStatus();
+    public UserGroupDto(UserGroup userGroup) {
+        if (userGroup != null) {
+            id = userGroup.getId();
+            code = userGroup.getCode();
+            isAdmin = userGroup.getIsAdmin();
+            isCreator = userGroup.getIsCreator();
+            isEditor = userGroup.getIsEditor();
+            status = userGroup.getStatus();
         }
     }
 }

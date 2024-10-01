@@ -2,32 +2,27 @@ package com.informatics.supplychain.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import com.informatics.supplychain.enums.StatusEnum;
-import com.informatics.supplychain.model.Supplier;
-import com.informatics.supplychain.repository.SupplierRepository;
+import com.informatics.supplychain.model.Item;
+import com.informatics.supplychain.repository.ItemRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
 
-/**
- *
- * @author nica
- */
-
 @Service
-public class SupplierService {
+public class ItemService {
 
     @Autowired
-    SupplierRepository supplierRepository;
+    ItemRepository itemRepository;
 
-    public Supplier findByCodeAndStatus(String code, StatusEnum status) {
-        return supplierRepository.findByCodeAndStatus(code, status);
+    public Item findByCodeAndStatus(String code, StatusEnum status) {
+        return itemRepository.findByCodeAndStatus(code, status);
     }
     
-    public List<Supplier> findAll(){
-      return supplierRepository.findAll();
+    public List<Item> findAll(){
+      return itemRepository.findAll();
     }
     
-    public Supplier save(Supplier supplier){
-       return supplierRepository.save(supplier);
+    public Item save(Item item){
+       return itemRepository.save(item);
     }
 }

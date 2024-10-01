@@ -5,10 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import com.informatics.supplychain.model.Supplier;
 
-/**
- *
- * @author nica
- */
 
 @Getter
 @Setter

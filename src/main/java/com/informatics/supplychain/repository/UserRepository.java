@@ -9,5 +9,5 @@ public interface UserRepository extends JpaRepository<User, Integer>{
     
     public User findByUsercodeAndStatus(String usercode, StatusEnum status);
     
-    User findByUsername(String username);
+    User findByUsercode(String usercode);
 }

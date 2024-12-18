@@ -24,9 +24,4 @@ public class UserService {
     public User save(User user){
        return userRepository.save(user);
     }
-    
-    public boolean authenticate(String usercode, String password) {
-        User user = userRepository.findByUsercode(usercode);
-        return user != null && user.getPassword().equals(password);
-    }
 }

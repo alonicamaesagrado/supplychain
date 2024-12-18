@@ -5,7 +5,9 @@ import com.informatics.supplychain.enums.StatusEnum;
 import com.informatics.supplychain.model.User;
 import com.informatics.supplychain.service.UserGroupService;
 import com.informatics.supplychain.service.UserService;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -50,5 +52,20 @@ public class UserController {
         }
         user.setUserGroup(userGroup);
         return ResponseEntity.ok(new UserDto(userService.save(user)));
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginData) {
+        String username = loginData.get("username");
+        String password = loginData.get("password");
+
+        boolean isAuthenticated = userService.authenticate(username, password);
+        if (isAuthenticated) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Login successful");
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(401).body("Invalid username or password");
+        }
     }
 }

@@ -54,7 +54,7 @@ public class UserController {
         return ResponseEntity.ok(new UserDto(userService.save(user)));
     }
     
-    @PostMapping("/login")
+    @PostMapping("v1/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginData) {
         String usercode = loginData.get("username");
         String password = loginData.get("password");

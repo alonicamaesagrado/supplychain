@@ -37,6 +37,8 @@ public class User {
     @NotBlank(message = "Value required for last name.")
     private String last_name;
     
+    private String email;
+    
     @JoinColumn
     @ManyToOne
     private UserGroup userGroup;
@@ -53,6 +55,7 @@ public class User {
         password = dto.getPassword();
         first_name = dto.getFirst_name();
         last_name = dto.getLast_name();
+        email = dto.getEmail();
         if (dto.getUserGroup()!= null) {
             userGroup = new UserGroup(dto.getUserGroup());
         }

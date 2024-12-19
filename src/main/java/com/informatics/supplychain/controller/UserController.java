@@ -45,6 +45,7 @@ public class UserController {
         user.setPassword(userDto.getPassword());
         user.setFirst_name(userDto.getFirst_name());
         user.setLast_name(userDto.getLast_name());
+        user.setEmail(userDto.getEmail());
         if (userGroup == null) {
             throw new Exception("User Group does not exist!");
         }

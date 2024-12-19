@@ -14,6 +14,7 @@ public class UserDto {
     public String password;
     public String first_name;
     public String last_name;
+    public String email;
     public UserGroupDto userGroup;
     public StatusEnum status;
 
@@ -27,6 +28,7 @@ public class UserDto {
             password = entity.getPassword();
             first_name = entity.getFirst_name();
             last_name = entity.getLast_name();
+            email = entity.getEmail();
             if (entity.getUserGroup() != null) {
                 userGroup = new UserGroupDto(entity.getUserGroup());
             }

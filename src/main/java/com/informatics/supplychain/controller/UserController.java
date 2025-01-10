@@ -5,7 +5,10 @@ import com.informatics.supplychain.enums.StatusEnum;
 import com.informatics.supplychain.model.User;
 import com.informatics.supplychain.service.UserGroupService;
 import com.informatics.supplychain.service.UserService;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -52,12 +55,23 @@ public class UserController {
         user.setUserGroup(userGroup);
         return ResponseEntity.ok(new UserDto(userService.save(user)));
     }
-    
-     @PostMapping("v1/login")
-    public ResponseEntity<String> login(@RequestBody UserDto userDto) {
+
+    @PostMapping("v1/login")
+    public ResponseEntity<?> login(@RequestBody UserDto userDto) {
         User user = userService.findByUserCodeAndStatus(userDto.getUsercode(), StatusEnum.ACTIVE);
         if (user != null && user.getPassword().equals(userDto.getPassword())) {
-            return ResponseEntity.ok("Login successful!");
+
+            UserDto responseDto = new UserDto();
+            responseDto.setUsercode(user.getUsercode());
+            responseDto.setFirst_name(user.getFirst_name());
+            responseDto.setLast_name(user.getLast_name());
+            responseDto.setEmail(user.getEmail());
+            responseDto.setStatus(user.getStatus());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("userDetails:  ", responseDto);
+            response.put("loggedInAt:   ", LocalDateTime.now());
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(401).body("Invalid credentials");
         }

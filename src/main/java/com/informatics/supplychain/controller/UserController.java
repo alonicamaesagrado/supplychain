@@ -1,5 +1,6 @@
 package com.informatics.supplychain.controller;
 
+import com.informatics.supplychain.dto.LoginDto;
 import com.informatics.supplychain.dto.UserDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import com.informatics.supplychain.model.User;
@@ -60,15 +61,9 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody UserDto userDto) {
         User user = userService.findByUserCodeAndStatus(userDto.getUsercode(), StatusEnum.ACTIVE);
         if (user != null && user.getPassword().equals(userDto.getPassword())) {
-
-            UserDto responseDto = new UserDto();
-            responseDto.setUsercode(user.getUsercode());
-            responseDto.setFirst_name(user.getFirst_name());
-            responseDto.setLast_name(user.getLast_name());
-            responseDto.setEmail(user.getEmail());
-            responseDto.setStatus(user.getStatus());
-
             Map<String, Object> response = new HashMap<>();
+            var responseDto = new LoginDto (user);
+            
             response.put("userDetails:  ", responseDto);
             response.put("loggedInAt:   ", LocalDateTime.now());
             return ResponseEntity.ok(response);

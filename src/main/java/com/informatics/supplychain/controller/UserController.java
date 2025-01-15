@@ -31,8 +31,12 @@ public class UserController {
     UserGroupService userGroupService;
 
     @GetMapping("v1/user")
-    ResponseEntity<UserDto> getUser(@RequestParam String usercode) {
+    ResponseEntity<?> getUser(@RequestParam String usercode) {
         var user = userService.findByUserCodeAndStatus(usercode, StatusEnum.ACTIVE);
+        
+        if (user == null) {
+            return ResponseEntity.status(404).body("User not found.");
+        }
         return ResponseEntity.ok(new UserDto(user));
     }
 

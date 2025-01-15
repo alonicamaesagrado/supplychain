@@ -7,7 +7,6 @@ import com.informatics.supplychain.repository.ItemRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
-
 @Service
 public class ItemService {
 
@@ -17,12 +16,16 @@ public class ItemService {
     public Item findByCodeAndStatus(String code, StatusEnum status) {
         return itemRepository.findByCodeAndStatus(code, status);
     }
-    
-    public List<Item> findAll(){
-      return itemRepository.findAll();
+
+    public List<Item> findByCategory(String category) {
+        return itemRepository.findByCategory(category);
     }
-    
-    public Item save(Item item){
-       return itemRepository.save(item);
+
+    public List<Item> findAll() {
+        return itemRepository.findAll();
+    }
+
+    public Item save(Item item) {
+        return itemRepository.save(item);
     }
 }

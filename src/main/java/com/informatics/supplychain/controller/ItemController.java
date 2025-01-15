@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @RestController
 @CrossOrigin
 public class ItemController {
+
     @Autowired
     ItemService itemService;
-    
+
     @GetMapping("v1/item")
     ResponseEntity<?> getItem(@RequestParam String code) {
         var item = itemService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
@@ -29,13 +29,21 @@ public class ItemController {
             return ResponseEntity.status(404).body("Item not found.");
         }
         return ResponseEntity.ok(new ItemDto(item));
-    } 
-    
+    }
+
     @GetMapping("v1/itemList")
-    ResponseEntity<List<ItemDto>> getItemList() {
-        return ResponseEntity.ok(itemService.findAll().stream().map(e -> new ItemDto(e)).collect(Collectors.toList()));
-    } 
-    
+    ResponseEntity<List<ItemDto>> getItemList(@RequestParam(required = false) String category) {
+        List<Item> items;
+
+        if (category != null && !category.isEmpty()) {
+            items = itemService.findByCategory(category);
+        } else {
+            items = itemService.findAll();
+        }
+        List<ItemDto> itemDtos = items.stream().map(ItemDto::new).collect(Collectors.toList());
+        return ResponseEntity.ok(itemDtos);
+    }
+
     @PostMapping("v1/item")
     ResponseEntity<ItemDto> saveItem(@RequestBody ItemDto itemDto) {
         var item = new Item();

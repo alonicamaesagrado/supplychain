@@ -23,8 +23,11 @@ public class ItemController {
     ItemService itemService;
     
     @GetMapping("v1/item")
-    ResponseEntity<ItemDto> getItem(@RequestParam String code) {
+    ResponseEntity<?> getItem(@RequestParam String code) {
         var item = itemService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
+        if (item == null) {
+            return ResponseEntity.status(404).body("Item not found.");
+        }
         return ResponseEntity.ok(new ItemDto(item));
     } 
     

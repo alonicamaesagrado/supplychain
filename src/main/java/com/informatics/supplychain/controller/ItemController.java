@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,5 +57,26 @@ public class ItemController {
         item.setPrice(itemDto.getPrice());
         item.setCost(itemDto.getCost());
         return ResponseEntity.ok(new ItemDto(itemService.save(item)));
+    }
+    
+    @PutMapping("v1/item")
+    public ResponseEntity<?> updateItem(@RequestBody ItemDto itemDto) throws Exception {
+        String itemCode = itemDto.getCode();
+        var existingItem = itemService.findByCodeAndStatus(itemDto.getCode(), StatusEnum.ACTIVE);
+        if (existingItem == null) {
+            return ResponseEntity.status(404).body("Item not found.");
+        }
+        existingItem.setCode(itemDto.getCode());
+        existingItem.setDescription(itemDto.getDescription());
+        existingItem.setCategory(itemDto.getCategory());
+        existingItem.setBrand(itemDto.getBrand());
+        existingItem.setUnit(itemDto.getUnit());
+        existingItem.setReorderPoint(itemDto.getReorderPoint());
+        existingItem.setPrice(itemDto.getPrice());
+        existingItem.setCost(itemDto.getCost());
+        existingItem.setStatus(itemDto.getStatus());
+        
+        var updatedItem = itemService.save(existingItem);
+        return ResponseEntity.ok(new ItemDto(updatedItem));
     }
 }

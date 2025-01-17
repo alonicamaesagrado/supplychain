@@ -33,11 +33,15 @@ public class ItemController {
     }
 
     @GetMapping("v1/itemList")
-    ResponseEntity<List<ItemDto>> getItemList(@RequestParam(required = false) String category) {
+    ResponseEntity<List<ItemDto>> getItemList(@RequestParam(required = false) String category, @RequestParam(required = false) StatusEnum status) {
         List<Item> items;
 
-        if (category != null && !category.isEmpty()) {
+        if ((category != null && !category.isEmpty()) && status != null) {
+            items = itemService.findByCategoryAndStatus(category, status);
+        } else if (category != null && !category.isEmpty()) {
             items = itemService.findByCategory(category);
+        } else if (status != null) {
+            items = itemService.findByStatus(status);
         } else {
             items = itemService.findAll();
         }

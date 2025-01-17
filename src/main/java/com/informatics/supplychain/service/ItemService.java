@@ -20,6 +20,13 @@ public class ItemService {
     public List<Item> findByCategory(String category) {
         return itemRepository.findByCategory(category);
     }
+    public List<Item> findByStatus(StatusEnum status) {
+        return itemRepository.findByStatus(status);
+    }
+
+    public List<Item> findByCategoryAndStatus(String category, StatusEnum status) {
+        return itemRepository.findByCategoryAndStatus(category, status);
+    }
 
     public List<Item> findAll() {
         return itemRepository.findAll();

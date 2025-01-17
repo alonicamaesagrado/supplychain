@@ -11,4 +11,6 @@ public interface ItemRepository extends JpaRepository<Item, Integer>{
     public Item findByCodeAndStatus(String code, StatusEnum status);
     
     List<Item> findByCategory(String category);
+    List<Item> findByCategoryAndStatus(String category, StatusEnum status);
+    List<Item> findByStatus(StatusEnum status);
 }

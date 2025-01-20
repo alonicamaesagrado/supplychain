@@ -12,6 +12,10 @@ public class ItemService {
 
     @Autowired
     ItemRepository itemRepository;
+    
+    public Item findByCode(String code) {
+        return itemRepository.findByCode(code).orElse(null);
+    }
 
     public Item findByCodeAndStatus(String code, StatusEnum status) {
         return itemRepository.findByCodeAndStatus(code, status);

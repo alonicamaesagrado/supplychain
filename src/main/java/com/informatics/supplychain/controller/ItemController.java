@@ -26,9 +26,12 @@ public class ItemController {
 
     @GetMapping("v1/item")
     ResponseEntity<?> getItem(@RequestParam String code) {
-        var item = itemService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
+        var item = itemService.findByCode(code);
         if (item == null) {
             return ResponseEntity.status(404).body("Item not found.");
+        }
+        if (item.getStatus() != StatusEnum.ACTIVE) {
+            return ResponseEntity.status(400).body("Item is inactive.");
         }
         return ResponseEntity.ok(new ItemDto(item));
     }
@@ -66,7 +69,7 @@ public class ItemController {
 
     @PutMapping("v1/item/{itemCode}")
     public ResponseEntity<?> updateItem(@PathVariable("itemCode") String code, @RequestBody ItemDto itemDto) throws Exception {
-        var existingItem = itemService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
+        var existingItem = itemService.findByCode(code);
         if (existingItem == null) {
             return ResponseEntity.status(404).body("Item not found.");
         }

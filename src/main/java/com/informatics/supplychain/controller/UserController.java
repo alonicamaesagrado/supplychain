@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,14 +43,29 @@ public class UserController {
     }
 
     @GetMapping("v1/userList")
-    ResponseEntity<List<UserDto>> getUserList() {
-        return ResponseEntity.ok(userService.findAll().stream().map(e -> new UserDto(e)).collect(Collectors.toList()));
+    ResponseEntity<List<UserDto>> getUserList(@RequestParam(required = false) StatusEnum status) {
+        List<User> user;
+
+        if (status != null) {
+            user = userService.findByStatus(status);
+        } else {
+            user = userService.findAll();
+        }
+        List<UserDto> userDtos = user.stream().map(UserDto::new).collect(Collectors.toList());
+        return ResponseEntity.ok(userDtos);
     }
 
     @PostMapping("v1/user")
-    ResponseEntity<UserDto> saveUser(@RequestBody UserDto userDto) throws Exception {
+    ResponseEntity<?> saveUser(@RequestBody UserDto userDto) throws Exception {
         var user = new User();
         var userGroup = userGroupService.findById(userDto.getUserGroup().getId());
+        
+        if (userService.existsByUsercode(userDto.getUsercode())) {
+            return ResponseEntity.status(400).body("Usercode already exists.");
+        }
+        if (userService.existsByEmail(userDto.getEmail())) {
+            return ResponseEntity.status(400).body("Email already exists.");
+        }
         user.setUsercode(userDto.getUsercode());
         user.setPassword(userDto.getPassword());
         user.setFirst_name(userDto.getFirst_name());
@@ -62,19 +78,26 @@ public class UserController {
         return ResponseEntity.ok(new UserDto(userService.save(user)));
     }
 
-    @PutMapping("v1/user")
-    public ResponseEntity<?> updateUser(@RequestBody UserDto userDto) throws Exception {
-        String usercode = userDto.getUsercode();
-        var existingUser = userService.findByUserCodeAndStatus(userDto.getUsercode(), StatusEnum.ACTIVE);
+    @PutMapping("v1/user/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable("id") Integer id, @RequestBody UserDto userDto) throws Exception {
+        var existingUser = userService.findById(id);
+        var userGroup = userGroupService.findById(userDto.getUserGroup().getId());
+        
+        //validations
         if (existingUser == null) {
             return ResponseEntity.status(404).body("User not found.");
         }
-
-        var userGroup = userGroupService.findById(userDto.getUserGroup().getId());
+        if (!existingUser.getUsercode().equals(userDto.getUsercode()) && userService.existsByUsercode(userDto.getUsercode())) {
+            return ResponseEntity.status(400).body("Usercode already exists.");
+        }
+        if (!existingUser.getEmail().equals(userDto.getEmail()) && userService.existsByEmail(userDto.getEmail())) {
+            return ResponseEntity.status(400).body("Email already exists.");
+        }
         if (userGroup == null) {
             throw new Exception("User Group does not exist!");
         }
-
+        
+        existingUser.setUsercode(userDto.getUsercode());
         existingUser.setPassword(userDto.getPassword());
         existingUser.setFirst_name(userDto.getFirst_name());
         existingUser.setLast_name(userDto.getLast_name());

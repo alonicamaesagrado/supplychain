@@ -10,6 +10,7 @@ import com.informatics.supplychain.model.User;
 
 public class UserDto {
 
+    public Integer id;
     public String usercode;
     public String password;
     public String first_name;
@@ -24,6 +25,7 @@ public class UserDto {
 
     public UserDto(User entity) {
         if (entity != null) {
+            id = entity.getId();
             usercode = entity.getUsercode();
             password = entity.getPassword();
             first_name = entity.getFirst_name();

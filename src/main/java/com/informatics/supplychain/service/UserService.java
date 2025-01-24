@@ -13,8 +13,16 @@ public class UserService {
     @Autowired
     UserRepository userRepository;
 
+    public User findById(Integer id){
+      return userRepository.findById(id).orElse(null);
+    }
+    
     public User findByUserCodeAndStatus(String usercode, StatusEnum status) {
         return userRepository.findByUsercodeAndStatus(usercode, status);
+    }
+    
+    public List<User> findByStatus(StatusEnum status) {
+        return userRepository.findByStatus(status);
     }
     
     public List<User> findAll(){
@@ -23,5 +31,13 @@ public class UserService {
     
     public User save(User user){
        return userRepository.save(user);
+    }
+    
+    public boolean existsByUsercode(String usercode) {
+        return userRepository.existsByUsercode(usercode);
+    }
+    
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

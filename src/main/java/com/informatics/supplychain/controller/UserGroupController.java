@@ -10,25 +10,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @RestController
 @CrossOrigin
 public class UserGroupController {
+
     @Autowired
     UserGroupService userGroupService;
-    
+
     @GetMapping("v1/usergroup")
     ResponseEntity<UserGroupDto> getUserGroup(@RequestParam String code) {
         var userGroup = userGroupService.findByCodeAndStatus(code, StatusEnum.ACTIVE);
         return ResponseEntity.ok(new UserGroupDto(userGroup));
     }
-    
+
     @PostMapping("v1/usergroup")
     ResponseEntity<UserGroupDto> saveUserGroup(@RequestBody UserGroupDto userGroupDto) {
         var userGroup = new UserGroup();
@@ -38,16 +39,23 @@ public class UserGroupController {
         userGroup.setIsEditor(userGroupDto.getIsEditor());
         return ResponseEntity.ok(new UserGroupDto(userGroupService.save(userGroup)));
     }
-    
+
     @GetMapping("v1/usergroupList")
-    ResponseEntity<List<UserGroupDto>> getUserGroupList() {
-        return ResponseEntity.ok(userGroupService.findAll().stream().map(e -> new UserGroupDto(e)).collect(Collectors.toList()));
+    ResponseEntity<List<UserGroupDto>> getUserGroupList(@RequestParam(required = false) StatusEnum status) {
+        List<UserGroup> usergroup;
+
+        if (status != null) {
+            usergroup = userGroupService.findByStatus(status);
+        } else {
+            usergroup = userGroupService.findAll();
+        }
+        List<UserGroupDto> usergroupDtos = usergroup.stream().map(UserGroupDto::new).collect(Collectors.toList());
+        return ResponseEntity.ok(usergroupDtos);
     }
-    
-    @PutMapping("v1/usergroup")
-    public ResponseEntity<?> updateUserGroup(@RequestBody UserGroupDto userGroupDto) throws Exception {
-        String userGroupCode = userGroupDto.getCode();
-        var existingUsergroup = userGroupService.findByCodeAndStatus(userGroupDto.getCode(), StatusEnum.ACTIVE);
+
+    @PutMapping("v1/usergroup/{id}")
+    public ResponseEntity<?> updateUserGroup(@PathVariable("id") Integer id, @RequestBody UserGroupDto userGroupDto) throws Exception {
+        var existingUsergroup = userGroupService.findById(id);
         if (existingUsergroup == null) {
             return ResponseEntity.status(404).body("User group not found.");
         }
@@ -56,7 +64,7 @@ public class UserGroupController {
         existingUsergroup.setIsCreator(userGroupDto.getIsCreator());
         existingUsergroup.setIsEditor(userGroupDto.getIsEditor());
         existingUsergroup.setStatus(userGroupDto.getStatus());
-        
+
         var updatedUsergoup = userGroupService.save(existingUsergroup);
         return ResponseEntity.ok(new UserGroupDto(updatedUsergoup));
     }

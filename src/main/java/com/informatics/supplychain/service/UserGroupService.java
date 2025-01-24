@@ -18,8 +18,16 @@ public class UserGroupService {
         return userGroupRepository.findByCodeAndStatus(code, status);
     }
     
+    public List<UserGroup> findByStatus(StatusEnum status) {
+        return userGroupRepository.findByStatus(status);
+    }
+    
     public UserGroup findById(Integer id){
       return userGroupRepository.findById(id).orElse(null);
+    }
+    
+    public UserGroup findByIdAndStatus(Integer id, StatusEnum status) {
+        return userGroupRepository.findByIdAndStatus(id, status);
     }
     
     public List<UserGroup> findAll(){

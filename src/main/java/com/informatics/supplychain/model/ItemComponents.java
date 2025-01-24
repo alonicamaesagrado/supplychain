@@ -1,7 +1,7 @@
 package com.informatics.supplychain.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.informatics.supplychain.dto.ItemDto;
+import com.informatics.supplychain.dto.ItemComponentsDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,7 +10,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,38 +20,37 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Item {
+public class ItemComponents {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty(value = "id")
     @Column(insertable = true, updatable = false)
     protected Integer id;
-    @NotBlank(message = "Value required for code.")
-    private String code;
-    @NotBlank(message = "Value required for description.")
-    private String description;
-    private String category;
-    private String brand;
-    private String unit;
-    private Double reorderPoint;
-    private Double price;
-    private Double cost;
+    
+    @JoinColumn
+    @ManyToOne
+    private Item fpCode;
+    
+    @JoinColumn
+    @ManyToOne
+    private Item rmCode;
+    
+    private String quantity;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     
-    public Item() {
+    public ItemComponents() {
         status = StatusEnum.ACTIVE;
     }
  
-    public Item(ItemDto dto) {
-        code = dto.getCode();
-        description = dto.getDescription();
-        category = dto.getCategory();
-        brand = dto.getBrand();
-        unit = dto.getUnit();
-        reorderPoint = dto.getReorderPoint();
-        price = dto.getPrice();
-        cost = dto.getCost();
+    public ItemComponents(ItemComponentsDto dto) {
+        if (dto.getFpCode() != null) {
+            fpCode = new Item(dto.getFpCode());
+        }
+        if (dto.getRmCode() != null) {
+            rmCode = new Item(dto.getRmCode());
+        }
+        quantity = dto.getQuantity();
     }
 }

@@ -54,7 +54,11 @@ public class ItemController {
     }
 
     @PostMapping("v1/item")
-    ResponseEntity<ItemDto> saveItem(@RequestBody ItemDto itemDto) {
+    ResponseEntity<?> saveItem(@RequestBody ItemDto itemDto) {
+        Item existingItem = itemService.findByCode(itemDto.getCode());
+        if (existingItem != null) {
+            return ResponseEntity.status(400).body("Item code already exists.");
+        }
         var item = new Item();
         item.setCode(itemDto.getCode());
         item.setDescription(itemDto.getDescription());

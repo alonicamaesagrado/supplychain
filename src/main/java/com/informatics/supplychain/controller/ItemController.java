@@ -4,7 +4,10 @@ import com.informatics.supplychain.dto.ItemDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import com.informatics.supplychain.model.Item;
 import com.informatics.supplychain.service.ItemService;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -69,6 +72,35 @@ public class ItemController {
         item.setPrice(itemDto.getPrice());
         item.setCost(itemDto.getCost());
         return ResponseEntity.ok(new ItemDto(itemService.save(item)));
+    }
+
+    @PostMapping("v1/items/mass-upload")
+    ResponseEntity<?> saveItems(@RequestBody List<ItemDto> itemDtos) {
+        List<String> errors = new ArrayList<>();
+        List<ItemDto> savedItems = new ArrayList<>();
+
+        for (ItemDto itemDto : itemDtos) {
+            Item existingItem = itemService.findByCode(itemDto.getCode());
+            if (existingItem != null) {
+                errors.add("Item with code " + itemDto.getCode() + " already exists.");
+                continue;
+            }
+            var item = new Item();
+            item.setCode(itemDto.getCode());
+            item.setDescription(itemDto.getDescription());
+            item.setCategory(itemDto.getCategory());
+            item.setBrand(itemDto.getBrand());
+            item.setUnit(itemDto.getUnit());
+            item.setReorderPoint(itemDto.getReorderPoint());
+            item.setPrice(itemDto.getPrice());
+            item.setCost(itemDto.getCost());
+            savedItems.add(new ItemDto(itemService.save(item)));
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("savedItems", savedItems);
+        response.put("errors", errors);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("v1/item/{itemCode}")

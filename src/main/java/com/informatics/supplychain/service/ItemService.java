@@ -12,7 +12,11 @@ public class ItemService {
 
     @Autowired
     ItemRepository itemRepository;
-    
+
+    public Item findById(Integer id) {
+        return itemRepository.findById(id).orElse(null);
+    }
+
     public Item findByCode(String code) {
         return itemRepository.findByCode(code).orElse(null);
     }
@@ -24,6 +28,7 @@ public class ItemService {
     public List<Item> findByCategory(String category) {
         return itemRepository.findByCategory(category);
     }
+
     public List<Item> findByStatus(StatusEnum status) {
         return itemRepository.findByStatus(status);
     }

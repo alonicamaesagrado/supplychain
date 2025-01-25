@@ -1,17 +1,9 @@
 package com.informatics.supplychain.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.informatics.supplychain.dto.ItemComponentsDto;
+import com.informatics.supplychain.dto.ItemDto;
 import com.informatics.supplychain.enums.StatusEnum;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,31 +19,32 @@ public class ItemComponents {
     @JsonProperty(value = "id")
     @Column(insertable = true, updatable = false)
     protected Integer id;
-    
+
     @JoinColumn
     @ManyToOne
     private Item finishProduct;
-    
-    
+
     @JoinColumn
     @ManyToOne
     private Item rawMaterial;
+
+    private Double quantity;
     
-    private String quantity;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
-    
+
     public ItemComponents() {
-        status = StatusEnum.ACTIVE;
+        this.status = StatusEnum.ACTIVE;
     }
- 
-    public ItemComponents(ItemComponentsDto dto) {
-        if (dto.getFinishProduct() != null) {
-            finishProduct = new Item(dto.getFinishProduct());
+
+    public ItemComponents(ItemDto finishProductDto, ItemDto rawMaterialDto, Double quantity) {
+        if (finishProductDto != null) {
+            this.finishProduct = new Item(finishProductDto);
         }
-        if (dto.getRawMaterial()!= null) {
-            rawMaterial = new Item(dto.getRawMaterial());
+        if (rawMaterialDto != null) {
+            this.rawMaterial = new Item(rawMaterialDto);
         }
-        quantity = dto.getQuantity();
+        this.quantity = quantity;
+        this.status = StatusEnum.ACTIVE;
     }
 }

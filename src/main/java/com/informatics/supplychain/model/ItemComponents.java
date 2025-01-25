@@ -30,11 +30,12 @@ public class ItemComponents {
     
     @JoinColumn
     @ManyToOne
-    private Item fpCode;
+    private Item finishProduct;
+    
     
     @JoinColumn
     @ManyToOne
-    private Item rmCode;
+    private Item rawMaterial;
     
     private String quantity;
     @Enumerated(EnumType.STRING)
@@ -45,11 +46,11 @@ public class ItemComponents {
     }
  
     public ItemComponents(ItemComponentsDto dto) {
-        if (dto.getFpCode() != null) {
-            fpCode = new Item(dto.getFpCode());
+        if (dto.getFinishProduct() != null) {
+            finishProduct = new Item(dto.getFinishProduct());
         }
-        if (dto.getRmCode() != null) {
-            rmCode = new Item(dto.getRmCode());
+        if (dto.getRawMaterial()!= null) {
+            rawMaterial = new Item(dto.getRawMaterial());
         }
         quantity = dto.getQuantity();
     }

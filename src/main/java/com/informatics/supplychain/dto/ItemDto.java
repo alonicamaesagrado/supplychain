@@ -4,6 +4,7 @@ import com.informatics.supplychain.enums.StatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import com.informatics.supplychain.model.Item;
+import java.util.List;
 
 
 @Getter
@@ -19,6 +20,7 @@ public class ItemDto {
     public Double price;
     public Double cost;
     public StatusEnum status;
+    public List<ItemComponentsDto> components;
     
     public ItemDto() {
         

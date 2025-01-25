@@ -12,7 +12,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,22 +32,27 @@ public class StockIn {
     @Column(insertable = true, updatable = false)
     protected Integer id;
     private String transactionNo;
+    @NotNull(message = "Transaction date cannot be null.")
     private LocalDate transactionDate;
     private String remarks;
-  
+
     @JoinColumn
     @ManyToOne
     private Item item;
-    
+
     private Double quantity;
-    
+    private String batchNo;
+
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
-    
+    private String createdBy;
+    private LocalDateTime createdDateTime;
+
     public StockIn() {
         status = StatusEnum.ACTIVE;
+        createdDateTime = LocalDateTime.now();
     }
- 
+
     public StockIn(StockInDto dto) {
         transactionNo = dto.getTransactionNo();
         transactionDate = dto.getTransactionDate();
@@ -53,5 +61,6 @@ public class StockIn {
             item = new Item(dto.getItem());
         }
         quantity = dto.getQuantity();
+        batchNo = dto.getBatchNo();
     }
 }

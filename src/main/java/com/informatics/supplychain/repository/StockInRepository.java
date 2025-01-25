@@ -7,12 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface StockInRepository extends JpaRepository<StockIn, Integer>{
-    
-    public StockIn findByTransactionNoAndStatus(String transactionNo, StatusEnum status);
-    
+public interface StockInRepository extends JpaRepository<StockIn, Integer> {
+
+    public StockIn findByTransactionNo(String transactionNo);
+
     List<StockIn> findByStatus(StatusEnum status);
-    
-    @Query("SELECT MAX(CAST(SUBSTRING(si.transactionNo, 7, 4) AS int)) FROM StockIn si WHERE si.transactionNo LIKE :yearMonth%")
-    Integer findMaxSeriesForYearMonth(@Param("yearMonth") String yearMonth);
+
+    @Query(value = "SELECT s.transaction_no FROM stock_in s WHERE s.transaction_no LIKE CONCAT('STI', :yearMonth, '%') ORDER BY s.transaction_no DESC LIMIT 1", nativeQuery = true)
+    String findLastTransactionNoByYearMonth(@Param("yearMonth") String yearMonth);
 }

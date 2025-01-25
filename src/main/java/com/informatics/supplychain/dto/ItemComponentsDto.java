@@ -10,8 +10,8 @@ import com.informatics.supplychain.model.ItemComponents;
 @Setter
 
 public class ItemComponentsDto {
-    public ItemDto fpCode;
-    public ItemDto rmCode;
+    public ItemDto finishProduct;
+    public ItemDto rawMaterial;
     public String quantity;
     public StatusEnum status;
     
@@ -21,11 +21,11 @@ public class ItemComponentsDto {
     
     public ItemComponentsDto(ItemComponents entity) {
         if (entity != null) {
-            if (entity.getFpCode() != null) {
-                fpCode = new ItemDto(entity.getFpCode());
+            if (entity.getFinishProduct() != null) {
+                finishProduct = new ItemDto(entity.getFinishProduct());
             }
-            if (entity.getRmCode() != null) {
-                rmCode = new ItemDto(entity.getRmCode());
+            if (entity.getRawMaterial() != null) {
+                rawMaterial = new ItemDto(entity.getRawMaterial());
             }
             quantity = entity.getQuantity();
             status = entity.getStatus();

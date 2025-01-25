@@ -4,7 +4,9 @@ import com.informatics.supplychain.enums.StatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import com.informatics.supplychain.model.StockIn;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -12,11 +14,14 @@ import java.time.LocalDate;
 public class StockInDto {
 
     public String transactionNo;
+    @NotNull(message = "Transaction date cannot be null.")
     public LocalDate transactionDate;
     public String remarks;
     public ItemDto item;
     public Double quantity;
+    public String batchNo;
     public StatusEnum status;
+    private LocalDateTime createdDateTime;
 
     public StockInDto() {
 
@@ -31,7 +36,9 @@ public class StockInDto {
                 item = new ItemDto(entity.getItem());
             }
             quantity = entity.getQuantity();
+            batchNo = entity.getBatchNo();
             status = entity.getStatus();
+            createdDateTime = entity.getCreatedDateTime();
         }
     }
 }

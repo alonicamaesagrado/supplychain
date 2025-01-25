@@ -53,6 +53,12 @@ public class StockInController {
         return ResponseEntity.ok(stockInDtos);
     }
 
+    @GetMapping("v1/stockInList/{itemId}")
+    public ResponseEntity<List<StockIn>> getStockInByItemId(@PathVariable Integer itemId) {
+        List<StockIn> stockIns = stockInService.findByItemId(itemId);
+        return ResponseEntity.ok(stockIns);
+    }
+
     @PostMapping("v1/stockIn")
     ResponseEntity<?> saveStockIn(@RequestBody StockInDto stockInDto) throws Exception {
         if (stockInDto.getTransactionDate() == null) {

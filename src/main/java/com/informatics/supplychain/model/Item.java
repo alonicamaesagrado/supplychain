@@ -44,6 +44,7 @@ public class Item {
     }
  
     public Item(ItemDto dto) {
+        id = dto.getId();
         code = dto.getCode();
         description = dto.getDescription();
         category = dto.getCategory();

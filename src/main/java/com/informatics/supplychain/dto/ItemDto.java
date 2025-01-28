@@ -10,6 +10,7 @@ import com.informatics.supplychain.model.Item;
 @Setter
 
 public class ItemDto {
+    public Integer id;
     public String code;
     public String description;
     public String category;
@@ -26,6 +27,7 @@ public class ItemDto {
     
     public ItemDto(Item entity) {
         if (entity != null) {
+            id = entity.getId();
             code = entity.getCode();
             description = entity.getDescription();
             category = entity.getCategory();

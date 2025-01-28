@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ItemComponentsRepository extends JpaRepository<ItemComponents, Long> {
     
     List<ItemComponents> findByFinishProduct(Item finishProduct);
+    
+    List<ItemComponents> findByFinishProductId(Integer finishProductId);
 }

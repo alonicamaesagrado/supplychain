@@ -1,8 +1,7 @@
 package com.informatics.supplychain.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import com.informatics.supplychain.enums.StatusEnum;
-import com.informatics.supplychain.model.Item;
+import com.informatics.supplychain.enums.TransactionStatusEnum;
 import com.informatics.supplychain.model.StockIn;
 import com.informatics.supplychain.repository.StockInRepository;
 import java.util.List;
@@ -26,11 +25,11 @@ public class StockInService {
         return stockInRepository.findByItemId(itemId);
     }
     
-    public List<StockIn> findByItemAndStatus(Integer itemId, StatusEnum status) {
+    public List<StockIn> findByItemAndStatus(Integer itemId, TransactionStatusEnum status) {
         return stockInRepository.findByItemAndStatus(itemId, status);
     }
 
-    public List<StockIn> findByStatus(StatusEnum status) {
+    public List<StockIn> findByStatus(TransactionStatusEnum status) {
         return stockInRepository.findByStatus(status);
     }
 

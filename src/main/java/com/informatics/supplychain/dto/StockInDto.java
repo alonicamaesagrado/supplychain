@@ -1,6 +1,6 @@
 package com.informatics.supplychain.dto;
 
-import com.informatics.supplychain.enums.StatusEnum;
+import com.informatics.supplychain.enums.TransactionStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import com.informatics.supplychain.model.StockIn;
@@ -20,7 +20,7 @@ public class StockInDto {
     public ItemDto item;
     public Double quantity;
     public String batchNo;
-    public StatusEnum status;
+    public TransactionStatusEnum status;
     private LocalDateTime createdDateTime;
 
     public StockInDto() {

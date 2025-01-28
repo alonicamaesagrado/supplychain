@@ -1,7 +1,7 @@
 package com.informatics.supplychain.controller;
 
 import com.informatics.supplychain.dto.StockInDto;
-import com.informatics.supplychain.enums.StatusEnum;
+import com.informatics.supplychain.enums.TransactionStatusEnum;
 import com.informatics.supplychain.model.StockIn;
 import com.informatics.supplychain.service.ItemService;
 import com.informatics.supplychain.service.StockInService;
@@ -41,7 +41,7 @@ public class StockInController {
     }
 
     @GetMapping("v1/stockInList")
-    ResponseEntity<List<StockInDto>> getStockInList(@RequestParam(required = false) StatusEnum status) {
+    ResponseEntity<List<StockInDto>> getStockInList(@RequestParam(required = false) TransactionStatusEnum status) {
         List<StockIn> stockIn;
 
         if (status != null) {

@@ -3,6 +3,7 @@ package com.informatics.supplychain.controller;
 import com.informatics.supplychain.dto.AssembleDto;
 import com.informatics.supplychain.dto.AssembleDetailDto;
 import com.informatics.supplychain.dto.ItemDto;
+import com.informatics.supplychain.enums.TransactionStatusEnum;
 import com.informatics.supplychain.model.Assemble;
 import com.informatics.supplychain.model.AssembleDetail;
 import com.informatics.supplychain.model.Inventory;
@@ -13,7 +14,7 @@ import com.informatics.supplychain.repository.ItemRepository;
 import com.informatics.supplychain.service.AssembleDetailService;
 import com.informatics.supplychain.service.AssembleService;
 import com.informatics.supplychain.service.InventoryService;
-import com.informatics.supplychain.service.ItemService;
+import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin
@@ -28,9 +30,6 @@ public class AssembleController {
 
     @Autowired
     private AssembleService assembleService;
-
-    @Autowired
-    private ItemService itemService;
 
     @Autowired
     private AssembleDetailService assembleDetailService;
@@ -43,6 +42,29 @@ public class AssembleController {
 
     @Autowired
     InventoryService inventoryService;
+
+    @GetMapping("v1/assemble")
+    public ResponseEntity<?> getAssemble(@RequestParam String transactionNo) {
+        var assemble = assembleService.findByTransactionNo(transactionNo);
+
+        if (assemble == null) {
+            return ResponseEntity.status(404).body("Transaction not found.");
+        }
+        return ResponseEntity.ok(new AssembleDto(assemble));
+    }
+
+    @GetMapping("v1/assembleList")
+    public ResponseEntity<List<AssembleDto>> getAssembleList(@RequestParam(required = false) TransactionStatusEnum status) {
+        List<Assemble> assembleList;
+
+        if (status != null) {
+            assembleList = assembleService.findByStatus(status);
+        } else {
+            assembleList = assembleService.findAll();
+        }
+        List<AssembleDto> assembleDtos = assembleList.stream().map(AssembleDto::new).collect(Collectors.toList());
+        return ResponseEntity.ok(assembleDtos);
+    }
 
     @PostMapping("v1/assemble")
     public ResponseEntity<?> saveAssemble(@RequestBody AssembleDto assembleDto) throws Exception {
@@ -58,6 +80,8 @@ public class AssembleController {
         //validations
         Item finishProduct = itemRepository.findById(assembleDto.getFinishProduct().getId()).orElseThrow(() -> new RuntimeException("Finish Product not found"));
         var assemble = new Assemble(assembleDto);
+        assemble.setStatus(TransactionStatusEnum.DRAFT);
+        assemble.setCreatedDateTime(LocalDateTime.now());
         List<ItemComponents> itemComponents = itemComponentsRepository.findByFinishProductId(assembleDto.getFinishProduct().getId());
         if (itemComponents.isEmpty()) {
             return ResponseEntity.status(404).body("No raw materials found for the provided finish product.");
@@ -107,7 +131,7 @@ public class AssembleController {
                 inventoryService.save(rawMaterialInventory);
             }
         }
-        
+
         //response body
         AssembleDto responseDto = new AssembleDto(assemble);
         responseDto.setFinishProduct(assembleDto.getFinishProduct());

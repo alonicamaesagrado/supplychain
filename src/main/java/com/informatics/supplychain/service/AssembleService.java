@@ -1,5 +1,6 @@
 package com.informatics.supplychain.service;
 
+import com.informatics.supplychain.enums.TransactionStatusEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.informatics.supplychain.model.Assemble;
 import com.informatics.supplychain.repository.AssembleRepository;
@@ -18,6 +19,14 @@ public class AssembleService {
 
     public List<Assemble> findAll() {
         return assembleRepository.findAll();
+    }
+    
+    public Assemble findByTransactionNo(String transactionNo) {
+        return assembleRepository.findByTransactionNo(transactionNo);
+    }
+    
+    public List<Assemble> findByStatus(TransactionStatusEnum status) {
+        return assembleRepository.findByStatus(status);
     }
 
     public Assemble save(Assemble assemble) {

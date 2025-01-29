@@ -112,6 +112,7 @@ public class AssembleController {
             newFinishProductInventory.setItem(finishProduct);
             newFinishProductInventory.setItemType(finishProduct.getCategory());
             newFinishProductInventory.setInQuantity(assembleDto.getAssemble_quantity());
+            newFinishProductInventory.setOutQuantity(0.0);
             inventoryService.save(newFinishProductInventory);
         }
 

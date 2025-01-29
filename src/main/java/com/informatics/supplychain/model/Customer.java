@@ -1,7 +1,7 @@
 package com.informatics.supplychain.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.informatics.supplychain.dto.SupplierDto;
+import com.informatics.supplychain.dto.CustomerDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,29 +19,31 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Supplier {
+public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty(value = "id")
     @Column(insertable = true, updatable = false)
     protected Integer id;
-    @NotBlank(message = "Value required for code.")
-    private String code;
     @NotBlank(message = "Value required for name.")
     private String name;
     private String address;
-    private String company;
-    private String terms;
+    private String contactPerson;
+    private String contactNumber;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     
-    public Supplier() {
+    public Customer() {
         status = StatusEnum.ACTIVE;
     }
  
-    public Supplier(SupplierDto dto) {
-        code = dto.getCode();
+    public Customer(CustomerDto dto) {
+        id = dto.getId();
         name = dto.getName();
+        address = dto.getAddress();
+        contactPerson = dto.getContactPerson();
+        contactNumber = dto.getContactNumber();
+        status = dto.getStatus();
     }
 }

@@ -2,7 +2,9 @@ package com.informatics.supplychain.controller;
 
 import com.informatics.supplychain.dto.StockInDto;
 import com.informatics.supplychain.enums.TransactionStatusEnum;
+import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.model.StockIn;
+import com.informatics.supplychain.service.InventoryService;
 import com.informatics.supplychain.service.ItemService;
 import com.informatics.supplychain.service.StockInService;
 import java.time.LocalDateTime;
@@ -29,6 +31,9 @@ public class StockInController {
 
     @Autowired
     ItemService itemService;
+
+    @Autowired
+    InventoryService inventoryService;
 
     @GetMapping("v1/stockIn")
     ResponseEntity<?> getStockIn(@RequestParam String transactionNo) {
@@ -64,7 +69,7 @@ public class StockInController {
         if (stockInDto.getTransactionDate() == null) {
             return ResponseEntity.status(404).body("Transaction date cannot be null.");
         }
-
+        //creation of stock in
         var stockIn = new StockIn();
         var item = itemService.findByCode(stockInDto.getItem().getCode());
 
@@ -82,7 +87,21 @@ public class StockInController {
         stockIn.setQuantity(stockInDto.getQuantity());
         stockIn.setBatchNo(stockInDto.getBatchNo());
         stockIn.setCreatedDateTime(LocalDateTime.now());
-        return ResponseEntity.ok(new StockInDto(stockInService.save(stockIn)));
+        stockIn = stockInService.save(stockIn);
+
+        //creation of inventory
+        var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
+        if (inventory == null) {
+            inventory = new Inventory();
+            inventory.setItem(item);
+            inventory.setItemType(item.getCategory());
+            inventory.setInQuantity(stockIn.getQuantity());
+            inventory.setOutQuantity(0.0);
+        } else {
+            inventory.setInQuantity(inventory.getInQuantity() + stockIn.getQuantity());
+        }
+        inventoryService.save(inventory);
+        return ResponseEntity.ok(new StockInDto(stockIn));
     }
 
     @PutMapping("v1/stockIn/{transactionNo}")
@@ -92,10 +111,25 @@ public class StockInController {
         if (existingTransaction == null) {
             return ResponseEntity.status(404).body("Transaction not found.");
         }
+        // checking of inventory
+        var inventory = inventoryService.findByItemIdAndItemType(
+                existingTransaction.getItem().getId(),
+                existingTransaction.getItem().getCategory());
+        if (inventory == null) {
+            return ResponseEntity.status(404).body("Inventory record not found for this item.");
+        }
+
+        // updating of inventory
+        Double originalQuantity = existingTransaction.getQuantity();
+        Double updatedQuantity = stockInDto.getQuantity();
+        inventory.setInQuantity(inventory.getInQuantity() - originalQuantity + updatedQuantity);
+
+        // updating of stock in details
         existingTransaction.setRemarks(stockInDto.getRemarks());
-        existingTransaction.setQuantity(stockInDto.getQuantity());
+        existingTransaction.setQuantity(updatedQuantity);
         existingTransaction.setBatchNo(stockInDto.getBatchNo());
-        var updateStockIn = stockInService.save(existingTransaction);
-        return ResponseEntity.ok(new StockInDto(updateStockIn));
+        existingTransaction = stockInService.save(existingTransaction);
+        inventoryService.save(inventory);
+        return ResponseEntity.ok(new StockInDto(existingTransaction));
     }
 }

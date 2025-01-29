@@ -5,12 +5,14 @@ import com.informatics.supplychain.dto.AssembleDetailDto;
 import com.informatics.supplychain.dto.ItemDto;
 import com.informatics.supplychain.model.Assemble;
 import com.informatics.supplychain.model.AssembleDetail;
+import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.model.Item;
 import com.informatics.supplychain.model.ItemComponents;
 import com.informatics.supplychain.repository.ItemComponentsRepository;
 import com.informatics.supplychain.repository.ItemRepository;
 import com.informatics.supplychain.service.AssembleDetailService;
 import com.informatics.supplychain.service.AssembleService;
+import com.informatics.supplychain.service.InventoryService;
 import com.informatics.supplychain.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,17 +41,21 @@ public class AssembleController {
     @Autowired
     private ItemRepository itemRepository;
 
+    @Autowired
+    InventoryService inventoryService;
+
     @PostMapping("v1/assemble")
     public ResponseEntity<?> saveAssemble(@RequestBody AssembleDto assembleDto) throws Exception {
         if (assembleDto.getTransactionDate() == null) {
             return ResponseEntity.status(404).body("Transaction date cannot be null.");
         }
-
+        //generated transaction number
         String yearMonth = assembleDto.getTransactionDate().format(DateTimeFormatter.ofPattern("yyMM"));
         int series = assembleService.getNextSeriesNumber(yearMonth);
         String transactionNo = "AS" + yearMonth + String.format("%04d", series);
         assembleDto.setTransactionNo(transactionNo);
 
+        //validations
         Item finishProduct = itemRepository.findById(assembleDto.getFinishProduct().getId()).orElseThrow(() -> new RuntimeException("Finish Product not found"));
         var assemble = new Assemble(assembleDto);
         List<ItemComponents> itemComponents = itemComponentsRepository.findByFinishProductId(assembleDto.getFinishProduct().getId());
@@ -57,6 +63,7 @@ public class AssembleController {
             return ResponseEntity.status(404).body("No raw materials found for the provided finish product.");
         }
 
+        //creation of assemble
         List<AssembleDetail> assembleDetails = new ArrayList<>();
         for (ItemComponents component : itemComponents) {
             AssembleDetail assembleDetail = new AssembleDetail();
@@ -70,18 +77,48 @@ public class AssembleController {
         for (AssembleDetail assembleDetail : assembleDetails) {
             assembleDetailService.save(assembleDetail);
         }
+
+        //creation of inventory for finish product
+        Inventory finishProductInventory = inventoryService.findByItemId(finishProduct.getId()).stream().findFirst().orElse(null);
+        if (finishProductInventory != null) {
+            finishProductInventory.setInQuantity(finishProductInventory.getInQuantity() + assembleDto.getAssemble_quantity());
+            inventoryService.save(finishProductInventory);
+        } else {
+            Inventory newFinishProductInventory = new Inventory();
+            newFinishProductInventory.setItem(finishProduct);
+            newFinishProductInventory.setItemType(finishProduct.getCategory());
+            newFinishProductInventory.setInQuantity(assembleDto.getAssemble_quantity());
+            inventoryService.save(newFinishProductInventory);
+        }
+
+        //creation of inventory for raw mats
+        for (AssembleDetail assembleDetail : assembleDetails) {
+            Item rawMaterial = assembleDetail.getRawMaterial();
+            List<Inventory> existingInventories = inventoryService.findByItemId(rawMaterial.getId());
+            if (!existingInventories.isEmpty()) {
+                Inventory existingInventory = existingInventories.get(0);
+                existingInventory.setOutQuantity(existingInventory.getOutQuantity() + assembleDetail.getUsedQuantity());
+                inventoryService.save(existingInventory);
+            } else {
+                Inventory rawMaterialInventory = new Inventory();
+                rawMaterialInventory.setItem(rawMaterial);
+                rawMaterialInventory.setItemType(rawMaterial.getCategory());
+                rawMaterialInventory.setOutQuantity(assembleDetail.getUsedQuantity());
+                inventoryService.save(rawMaterialInventory);
+            }
+        }
         
+        //response body
         AssembleDto responseDto = new AssembleDto(assemble);
         responseDto.setFinishProduct(assembleDto.getFinishProduct());
         List<AssembleDetailDto> detailDtos = new ArrayList<>();
         for (AssembleDetail assembleDetail : assembleDetails) {
             AssembleDetailDto detailDto = new AssembleDetailDto();
-            detailDto.setRawMaterial(new ItemDto(assembleDetail.getRawMaterial())); 
+            detailDto.setRawMaterial(new ItemDto(assembleDetail.getRawMaterial()));
             detailDto.setUsedQuantity(assembleDetail.getUsedQuantity());
             detailDtos.add(detailDto);
         }
         responseDto.setDetails(detailDtos);
-
         return ResponseEntity.ok(responseDto);
     }
 

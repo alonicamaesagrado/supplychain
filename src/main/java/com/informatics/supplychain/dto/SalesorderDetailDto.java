@@ -1,5 +1,6 @@
 package com.informatics.supplychain.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import com.informatics.supplychain.model.SalesorderDetail;
@@ -10,7 +11,10 @@ import com.informatics.supplychain.model.SalesorderDetail;
 public class SalesorderDetailDto {
 
     public Integer id;
-    public SalesorderDto salesorder;
+
+    @JsonIgnore  // Prevents infinite recursion
+    private SalesorderDto salesorder;
+
     public ItemDto item;
     public Double orderQuantity;
     public Double itemPrice;
@@ -23,12 +27,7 @@ public class SalesorderDetailDto {
     public SalesorderDetailDto(SalesorderDetail entity) {
         if (entity != null) {
             id = entity.getId();
-            if (entity.getSalesorder() != null) {
-                salesorder = new SalesorderDto(entity.getSalesorder());
-            }
-            if (entity.getItem() != null) {
-                item = new ItemDto(entity.getItem());
-            }
+            item = new ItemDto(entity.getItem());
             orderQuantity = entity.getOrderQuantity();
             itemPrice = entity.getItemPrice();
             amount = entity.getAmount();

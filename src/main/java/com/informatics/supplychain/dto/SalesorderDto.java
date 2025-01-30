@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -32,11 +33,12 @@ public class SalesorderDto {
             salesorderNo = entity.getSalesorderNo();
             orderDate = entity.getOrderDate();
             remarks = entity.getRemarks();
-            if (entity.getCustomer() != null) {
-                customer = new CustomerDto(entity.getCustomer());
-            }
+            customer = new CustomerDto(entity.getCustomer());
             status = entity.getStatus();
             createdDateTime = entity.getCreatedDateTime();
+            if (entity.getDetails() != null) {
+                details = entity.getDetails().stream().map(SalesorderDetailDto::new).collect(Collectors.toList());
+            }
         }
     }
 }

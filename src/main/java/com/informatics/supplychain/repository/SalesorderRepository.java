@@ -8,11 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface SalesorderRepository extends JpaRepository<Salesorder, Integer> {
-    
+
     public Salesorder findBySalesorderNo(String salesorderNo);
 
     List<Salesorder> findByStatus(TransactionStatusEnum status);
 
     @Query(value = "SELECT a.salesorder_no FROM salesorder a WHERE a.salesorder_no LIKE CONCAT('SO', :yearMonth, '%') ORDER BY a.salesorder_no DESC LIMIT 1", nativeQuery = true)
     String findLastSalesorderNoByYearMonth(@Param("yearMonth") String yearMonth);
+
+    @Query("SELECT s FROM Salesorder s JOIN s.details d WHERE d.item.id = :itemId")
+    List<Salesorder> findByItemId(@Param("itemId") Integer itemId);
+
 }

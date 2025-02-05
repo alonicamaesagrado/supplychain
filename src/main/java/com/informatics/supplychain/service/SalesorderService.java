@@ -33,6 +33,10 @@ public class SalesorderService {
     public List<Salesorder> findByStatus(TransactionStatusEnum status) {
         return salesorderRepository.findByStatus(status);
     }
+    
+    public List<Salesorder> findByItemId(Integer itemId) {
+        return salesorderRepository.findByItemId(itemId);
+    }
 
     public Salesorder save(Salesorder salesorder) {
         return salesorderRepository.save(salesorder);

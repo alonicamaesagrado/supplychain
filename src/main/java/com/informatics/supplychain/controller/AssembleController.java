@@ -54,14 +54,23 @@ public class AssembleController {
     }
 
     @GetMapping("v1/assembleList")
-    public ResponseEntity<List<AssembleDto>> getAssembleList(@RequestParam(required = false) TransactionStatusEnum status) {
+    public ResponseEntity<?> getAssembleList(@RequestParam(required = false) Integer itemId, @RequestParam(required = false) TransactionStatusEnum status) {
         List<Assemble> assembleList;
 
-        if (status != null) {
+        if (itemId != null && status != null) {
+            assembleList = assembleService.findByfinishProductAndStatus(itemId, status);
+        } else if (itemId != null) {
+            assembleList = assembleService.findByFinishProductId(itemId);
+        } else if (status != null) {
             assembleList = assembleService.findByStatus(status);
         } else {
             assembleList = assembleService.findAll();
         }
+
+        if (itemId != null && assembleList.isEmpty()) {
+            return ResponseEntity.status(404).body("No assembly records found for itemId: " + itemId);
+        }
+
         List<AssembleDto> assembleDtos = assembleList.stream().map(AssembleDto::new).collect(Collectors.toList());
         return ResponseEntity.ok(assembleDtos);
     }
@@ -85,6 +94,23 @@ public class AssembleController {
         List<ItemComponents> itemComponents = itemComponentsRepository.findByFinishProductId(assembleDto.getFinishProduct().getId());
         if (itemComponents.isEmpty()) {
             return ResponseEntity.status(404).body("No raw materials found for the provided finish product.");
+        }
+
+        //checking of raw mats stocks
+        List<String> insufficientStocks = new ArrayList<>();
+        for (ItemComponents component : itemComponents) {
+            double requiredQuantity = assembleDto.getAssemble_quantity() * component.getQuantity();
+            Inventory inventory = inventoryService.findByItemId(component.getRawMaterial().getId())
+                    .stream().findFirst().orElse(null);
+            double balance = (inventory != null) ? (inventory.getInQuantity() - inventory.getOutQuantity()) : 0.0;
+
+            if (balance < requiredQuantity) {
+                double lackingQuantity = requiredQuantity - balance;
+                insufficientStocks.add(component.getRawMaterial().getDescription() + " - lacking of " + lackingQuantity + " qty");
+            }
+        }
+        if (!insufficientStocks.isEmpty()) {
+            return ResponseEntity.status(400).body("Insufficient stock for raw materials: \n" + String.join(", \n", insufficientStocks));
         }
 
         //creation of assemble

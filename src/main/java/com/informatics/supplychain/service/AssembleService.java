@@ -20,11 +20,19 @@ public class AssembleService {
     public List<Assemble> findAll() {
         return assembleRepository.findAll();
     }
-    
+
     public Assemble findByTransactionNo(String transactionNo) {
         return assembleRepository.findByTransactionNo(transactionNo);
     }
+
+    public List<Assemble> findByFinishProductId(Integer itemId) {
+        return assembleRepository.findByFinishProductId(itemId);
+    }
     
+    public List<Assemble> findByfinishProductAndStatus(Integer finishProduct, TransactionStatusEnum status) {
+        return assembleRepository.findByFinishProductAndStatus(finishProduct,status );
+    }
+
     public List<Assemble> findByStatus(TransactionStatusEnum status) {
         return assembleRepository.findByStatus(status);
     }

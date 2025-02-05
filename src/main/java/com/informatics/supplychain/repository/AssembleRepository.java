@@ -8,8 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AssembleRepository extends JpaRepository<Assemble, Integer> {
-    
+
     public Assemble findByTransactionNo(String transactionNo);
+
+    @Query("SELECT a FROM Assemble a WHERE a.finishProduct.id = :itemId")
+    List<Assemble> findByFinishProductId(@Param("itemId") Integer itemId);
+
+    List<Assemble> findByFinishProductAndStatus(Integer finishProduct, TransactionStatusEnum status);
 
     List<Assemble> findByStatus(TransactionStatusEnum status);
 

@@ -19,12 +19,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin
-public class StockInController {
+public class StockInController extends BaseController {
 
     @Autowired
     StockInService stockInService;
@@ -65,7 +66,11 @@ public class StockInController {
     }
 
     @PostMapping("v1/stockIn")
-    ResponseEntity<?> saveStockIn(@RequestBody StockInDto stockInDto) throws Exception {
+    ResponseEntity<?> saveStockIn(@RequestHeader String usercode, @RequestHeader String token, @RequestBody StockInDto stockInDto) throws Exception {
+        if (!verify(usercode, token)) {
+            return ResponseEntity.badRequest().build();
+        }
+
         if (stockInDto.getTransactionDate() == null) {
             return ResponseEntity.status(404).body("Transaction date cannot be null.");
         }
@@ -87,6 +92,7 @@ public class StockInController {
         stockIn.setQuantity(stockInDto.getQuantity());
         stockIn.setBatchNo(stockInDto.getBatchNo());
         stockIn.setCreatedDateTime(LocalDateTime.now());
+        stockIn.setCreatedBy(usercode);
         stockIn = stockInService.save(stockIn);
 
         //creation of inventory
@@ -128,6 +134,7 @@ public class StockInController {
         existingTransaction.setRemarks(stockInDto.getRemarks());
         existingTransaction.setQuantity(updatedQuantity);
         existingTransaction.setBatchNo(stockInDto.getBatchNo());
+        existingTransaction.setStatus(stockInDto.getStatus());
         existingTransaction = stockInService.save(existingTransaction);
         inventoryService.save(inventory);
         return ResponseEntity.ok(new StockInDto(existingTransaction));

@@ -22,6 +22,7 @@ public class StockInDto {
     public String batchNo;
     public TransactionStatusEnum status;
     private LocalDateTime createdDateTime;
+    private String createdBy;
 
     public StockInDto() {
 
@@ -39,6 +40,7 @@ public class StockInDto {
             batchNo = entity.getBatchNo();
             status = entity.getStatus();
             createdDateTime = entity.getCreatedDateTime();
+            createdBy = entity.getCreatedBy();
         }
     }
 }

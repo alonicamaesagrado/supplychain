@@ -70,10 +70,10 @@ public class StockInController extends BaseController {
         if (!verify(usercode, token)) {
             return ResponseEntity.badRequest().build();
         }
-
         if (stockInDto.getTransactionDate() == null) {
             return ResponseEntity.status(404).body("Transaction date cannot be null.");
         }
+
         //creation of stock in
         var stockIn = new StockIn();
         var item = itemService.findByCode(stockInDto.getItem().getCode());
@@ -94,19 +94,6 @@ public class StockInController extends BaseController {
         stockIn.setCreatedDateTime(LocalDateTime.now());
         stockIn.setCreatedBy(usercode);
         stockIn = stockInService.save(stockIn);
-
-        //creation of inventory
-        var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
-        if (inventory == null) {
-            inventory = new Inventory();
-            inventory.setItem(item);
-            inventory.setItemType(item.getCategory());
-            inventory.setInQuantity(stockIn.getQuantity());
-            inventory.setOutQuantity(0.0);
-        } else {
-            inventory.setInQuantity(inventory.getInQuantity() + stockIn.getQuantity());
-        }
-        inventoryService.save(inventory);
         return ResponseEntity.ok(new StockInDto(stockIn));
     }
 
@@ -114,29 +101,37 @@ public class StockInController extends BaseController {
     public ResponseEntity<?> updateStockIn(@PathVariable("transactionNo") String transactionNo, @RequestBody StockInDto stockInDto) throws Exception {
         var existingTransaction = stockInService.findByTransactionNo(transactionNo);
 
+        //validations
         if (existingTransaction == null) {
             return ResponseEntity.status(404).body("Transaction not found.");
         }
-        // checking of inventory
-        var inventory = inventoryService.findByItemIdAndItemType(
-                existingTransaction.getItem().getId(),
-                existingTransaction.getItem().getCategory());
-        if (inventory == null) {
-            return ResponseEntity.status(404).body("Inventory record not found for this item.");
+        if (TransactionStatusEnum.COMPLETED.equals(existingTransaction.getStatus())) {
+            return ResponseEntity.status(400).body("Cannot edit completed transactions!");
         }
 
-        // updating of inventory
-        Double originalQuantity = existingTransaction.getQuantity();
-        Double updatedQuantity = stockInDto.getQuantity();
-        inventory.setInQuantity(inventory.getInQuantity() - originalQuantity + updatedQuantity);
+        //code if status is completed then update inventory
+        var item = itemService.findByCode(existingTransaction.getItem().getCode());
+        if (TransactionStatusEnum.COMPLETED.equals(stockInDto.getStatus())) {
+            var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
+            if (inventory == null) {
+                inventory = new Inventory();
+                inventory.setItem(item);
+                inventory.setItemType(item.getCategory());
+                inventory.setInQuantity(existingTransaction.getQuantity());
+                inventory.setOutQuantity(0.0);
+            } else {
+                inventory.setInQuantity(inventory.getInQuantity() + existingTransaction.getQuantity());
+            }
+            inventoryService.save(inventory);
+        }
 
-        // updating of stock in details
+        //update stock in details
         existingTransaction.setRemarks(stockInDto.getRemarks());
-        existingTransaction.setQuantity(updatedQuantity);
+        existingTransaction.setQuantity(stockInDto.getQuantity() == null ? existingTransaction.getQuantity() : stockInDto.getQuantity());
         existingTransaction.setBatchNo(stockInDto.getBatchNo());
         existingTransaction.setStatus(stockInDto.getStatus());
         existingTransaction = stockInService.save(existingTransaction);
-        inventoryService.save(inventory);
+
         return ResponseEntity.ok(new StockInDto(existingTransaction));
     }
 }

@@ -14,6 +14,7 @@ import com.informatics.supplychain.repository.ItemRepository;
 import com.informatics.supplychain.service.AssembleDetailService;
 import com.informatics.supplychain.service.AssembleService;
 import com.informatics.supplychain.service.InventoryService;
+import com.informatics.supplychain.service.ItemService;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin
-public class AssembleController {
+public class AssembleController extends BaseController {
 
     @Autowired
     private AssembleService assembleService;
@@ -42,6 +43,9 @@ public class AssembleController {
 
     @Autowired
     InventoryService inventoryService;
+
+    @Autowired
+    ItemService itemService;
 
     @GetMapping("v1/assemble")
     public ResponseEntity<?> getAssemble(@RequestParam String transactionNo) {
@@ -76,7 +80,10 @@ public class AssembleController {
     }
 
     @PostMapping("v1/assemble")
-    public ResponseEntity<?> saveAssemble(@RequestBody AssembleDto assembleDto) throws Exception {
+    public ResponseEntity<?> saveAssemble(@RequestHeader String usercode, @RequestHeader String token, @RequestBody AssembleDto assembleDto) throws Exception {
+        if (!verify(usercode, token)) {
+            return ResponseEntity.badRequest().build();
+        }
         if (assembleDto.getTransactionDate() == null) {
             return ResponseEntity.status(404).body("Transaction date cannot be null.");
         }
@@ -91,6 +98,7 @@ public class AssembleController {
         var assemble = new Assemble(assembleDto);
         assemble.setStatus(TransactionStatusEnum.DRAFT);
         assemble.setCreatedDateTime(LocalDateTime.now());
+        assemble.setCreatedBy(usercode);
         List<ItemComponents> itemComponents = itemComponentsRepository.findByFinishProductId(assembleDto.getFinishProduct().getId());
         if (itemComponents.isEmpty()) {
             return ResponseEntity.status(404).body("No raw materials found for the provided finish product.");
@@ -100,8 +108,7 @@ public class AssembleController {
         List<String> insufficientStocks = new ArrayList<>();
         for (ItemComponents component : itemComponents) {
             double requiredQuantity = assembleDto.getAssemble_quantity() * component.getQuantity();
-            Inventory inventory = inventoryService.findByItemId(component.getRawMaterial().getId())
-                    .stream().findFirst().orElse(null);
+            Inventory inventory = inventoryService.findByItemId(component.getRawMaterial().getId()).stream().findFirst().orElse(null);
             double balance = (inventory != null) ? (inventory.getInQuantity() - inventory.getOutQuantity()) : 0.0;
 
             if (balance < requiredQuantity) {
@@ -128,37 +135,6 @@ public class AssembleController {
             assembleDetailService.save(assembleDetail);
         }
 
-        //creation of inventory for finish product
-        Inventory finishProductInventory = inventoryService.findByItemId(finishProduct.getId()).stream().findFirst().orElse(null);
-        if (finishProductInventory != null) {
-            finishProductInventory.setInQuantity(finishProductInventory.getInQuantity() + assembleDto.getAssemble_quantity());
-            inventoryService.save(finishProductInventory);
-        } else {
-            Inventory newFinishProductInventory = new Inventory();
-            newFinishProductInventory.setItem(finishProduct);
-            newFinishProductInventory.setItemType(finishProduct.getCategory());
-            newFinishProductInventory.setInQuantity(assembleDto.getAssemble_quantity());
-            newFinishProductInventory.setOutQuantity(0.0);
-            inventoryService.save(newFinishProductInventory);
-        }
-
-        //creation of inventory for raw mats
-        for (AssembleDetail assembleDetail : assembleDetails) {
-            Item rawMaterial = assembleDetail.getRawMaterial();
-            List<Inventory> existingInventories = inventoryService.findByItemId(rawMaterial.getId());
-            if (!existingInventories.isEmpty()) {
-                Inventory existingInventory = existingInventories.get(0);
-                existingInventory.setOutQuantity(existingInventory.getOutQuantity() + assembleDetail.getUsedQuantity());
-                inventoryService.save(existingInventory);
-            } else {
-                Inventory rawMaterialInventory = new Inventory();
-                rawMaterialInventory.setItem(rawMaterial);
-                rawMaterialInventory.setItemType(rawMaterial.getCategory());
-                rawMaterialInventory.setOutQuantity(assembleDetail.getUsedQuantity());
-                inventoryService.save(rawMaterialInventory);
-            }
-        }
-
         //response body
         AssembleDto responseDto = new AssembleDto(assemble);
         responseDto.setFinishProduct(assembleDto.getFinishProduct());
@@ -173,4 +149,100 @@ public class AssembleController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @PutMapping("v1/assemble/{transactionNo}")
+    public ResponseEntity<?> updateAssemble(@PathVariable("transactionNo") String transactionNo, @RequestBody AssembleDto assembleDto) throws Exception {
+        var existingTransaction = assembleService.findByTransactionNo(transactionNo);
+
+        //validations
+        if (existingTransaction == null) {
+            return ResponseEntity.status(404).body("Transaction not found.");
+        }
+        if (TransactionStatusEnum.COMPLETED.equals(existingTransaction.getStatus())) {
+            return ResponseEntity.status(400).body("Cannot edit completed transactions!");
+        }
+
+        List<AssembleDetail> assembleDetails = assembleDetailService.findByAssemble(existingTransaction);
+        List<String> insufficientMaterials = new ArrayList<>();
+
+        double oldAssembleQuantity = existingTransaction.getAssemble_quantity();
+        double newAssembleQuantity = assembleDto.getAssemble_quantity();
+        double scaleFactor = (oldAssembleQuantity > 0) ? newAssembleQuantity / oldAssembleQuantity : 1;
+
+        // Updating usedQuantity in assembleDetails
+        for (AssembleDetail assembleDetail : assembleDetails) {
+            double newUsedQuantity = scaleFactor; // i need to update is based on updated assembled qty * item components 
+            assembleDetail.setUsedQuantity(newUsedQuantity);
+            assembleDetailService.save(assembleDetail);
+
+            // Check raw material inventory
+            Item rawMaterial = assembleDetail.getRawMaterial();
+            Inventory existingInventory = inventoryService.findByItemId(rawMaterial.getId()).stream().findFirst().orElse(null);
+
+            double currentStock = (existingInventory != null) ? (existingInventory.getInQuantity() - existingInventory.getOutQuantity()) : 0;
+            if (currentStock < newUsedQuantity) {
+                double lackingQuantity = newUsedQuantity - currentStock;
+                insufficientMaterials.add(rawMaterial.getDescription() + " - lacking " + lackingQuantity + " qty");
+            }
+        }
+        if (!insufficientMaterials.isEmpty()) {
+            return ResponseEntity.status(400).body("Insufficient stock for raw materials: \n" + String.join(",\n", insufficientMaterials));
+        }
+
+        // Update inventory once status is COMPLETED
+        if (TransactionStatusEnum.COMPLETED.equals(assembleDto.getStatus())) {
+            //inventory for finished product
+            Inventory finishProductInventory = inventoryService.findByItemId(existingTransaction.getFinishProduct().getId()).stream().findFirst().orElse(null);
+
+            if (finishProductInventory != null) {
+                finishProductInventory.setInQuantity(finishProductInventory.getInQuantity() + assembleDto.getAssemble_quantity());
+                inventoryService.save(finishProductInventory);
+            } else {
+                Inventory newFinishProductInventory = new Inventory();
+                newFinishProductInventory.setItem(existingTransaction.getFinishProduct());
+                newFinishProductInventory.setItemType(existingTransaction.getFinishProduct().getCategory());
+                newFinishProductInventory.setInQuantity(assembleDto.getAssemble_quantity());
+                newFinishProductInventory.setOutQuantity(0.0);
+                inventoryService.save(newFinishProductInventory);
+            }
+
+            //inventory for raw materials
+            for (AssembleDetail assembleDetail : assembleDetails) {
+                Item rawMaterial = assembleDetail.getRawMaterial();
+                List<Inventory> existingInventories = inventoryService.findByItemId(rawMaterial.getId());
+
+                if (!existingInventories.isEmpty()) {
+                    Inventory existingInventory = existingInventories.get(0);
+                    existingInventory.setOutQuantity(existingInventory.getOutQuantity() + assembleDetail.getUsedQuantity());
+                    inventoryService.save(existingInventory);
+                } else {
+                    Inventory rawMaterialInventory = new Inventory();
+                    rawMaterialInventory.setItem(rawMaterial);
+                    rawMaterialInventory.setItemType(rawMaterial.getCategory());
+                    rawMaterialInventory.setOutQuantity(assembleDetail.getUsedQuantity());
+                    inventoryService.save(rawMaterialInventory);
+                }
+            }
+        }
+
+        //update assemble transaction
+        existingTransaction.setRemarks(assembleDto.getRemarks());
+        existingTransaction.setBatchNo(assembleDto.getBatchNo());
+        existingTransaction.setStatus(assembleDto.getStatus());
+        existingTransaction.setAssemble_quantity(newAssembleQuantity);
+        assembleService.save(existingTransaction);
+
+        //response
+        AssembleDto responseDto = new AssembleDto(existingTransaction);
+        responseDto.setFinishProduct(assembleDto.getFinishProduct());
+        List<AssembleDetailDto> detailDtos = new ArrayList<>();
+        for (AssembleDetail assembleDetail : assembleDetails) {
+            AssembleDetailDto detailDto = new AssembleDetailDto();
+            detailDto.setRawMaterial(new ItemDto(assembleDetail.getRawMaterial()));
+            detailDto.setUsedQuantity(assembleDetail.getUsedQuantity());
+            detailDtos.add(detailDto);
+        }
+        responseDto.setDetails(detailDtos);
+
+        return ResponseEntity.ok(responseDto);
+    }
 }

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.informatics.supplychain.enums.TransactionStatusEnum;
 import com.informatics.supplychain.model.StockIn;
 import com.informatics.supplychain.repository.StockInRepository;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,10 @@ public class StockInService {
 
     public List<StockIn> findByStatus(TransactionStatusEnum status) {
         return stockInRepository.findByStatus(status);
+    }
+    
+    public List<StockIn> findByStatusAndTransactionDateBetween(TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate) {
+        return stockInRepository.findByStatusAndTransactionDateBetween(status, fromDate, toDate );
     }
 
     public List<StockIn> findAll() {

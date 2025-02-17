@@ -7,11 +7,13 @@ import com.informatics.supplychain.model.StockIn;
 import com.informatics.supplychain.service.InventoryService;
 import com.informatics.supplychain.service.ItemService;
 import com.informatics.supplychain.service.StockInService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,13 +49,14 @@ public class StockInController extends BaseController {
     }
 
     @GetMapping("v1/stockInList")
-    ResponseEntity<List<StockInDto>> getStockInList(@RequestParam(required = false) TransactionStatusEnum status) {
+    ResponseEntity<List<StockInDto>> getStockInList(@RequestParam(required = false) TransactionStatusEnum status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<StockIn> stockIn;
-
-        if (status != null) {
-            stockIn = stockInService.findByStatus(status);
+        if (fromDate != null && toDate != null) {
+            stockIn = stockInService.findByStatusAndTransactionDateBetween(status, fromDate, toDate);
         } else {
-            stockIn = stockInService.findAll();
+            stockIn = (status != null) ? stockInService.findByStatus(status) : stockInService.findAll();
         }
         List<StockInDto> stockInDtos = stockIn.stream().map(StockInDto::new).collect(Collectors.toList());
         return ResponseEntity.ok(stockInDtos);

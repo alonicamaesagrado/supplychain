@@ -113,14 +113,15 @@ public class StockInController extends BaseController {
         var item = itemService.findByCode(existingTransaction.getItem().getCode());
         if (TransactionStatusEnum.COMPLETED.equals(stockInDto.getStatus())) {
             var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
+            double updatedQuantity = stockInDto.getQuantity() == null ? existingTransaction.getQuantity() : stockInDto.getQuantity();
             if (inventory == null) {
                 inventory = new Inventory();
                 inventory.setItem(item);
                 inventory.setItemType(item.getCategory());
-                inventory.setInQuantity(existingTransaction.getQuantity());
+                inventory.setInQuantity(stockInDto.getQuantity() != null ? stockInDto.getQuantity() : existingTransaction.getQuantity());
                 inventory.setOutQuantity(0.0);
             } else {
-                inventory.setInQuantity(inventory.getInQuantity() + existingTransaction.getQuantity());
+                inventory.setInQuantity(inventory.getInQuantity() + updatedQuantity);
             }
             inventoryService.save(inventory);
         }

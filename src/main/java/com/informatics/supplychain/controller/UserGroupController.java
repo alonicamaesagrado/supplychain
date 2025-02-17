@@ -4,6 +4,7 @@ import com.informatics.supplychain.dto.UserGroupDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import com.informatics.supplychain.model.UserGroup;
 import com.informatics.supplychain.service.UserGroupService;
+import com.informatics.supplychain.service.UserService;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class UserGroupController {
 
     @Autowired
     UserGroupService userGroupService;
+    
+    @Autowired
+    UserService userService;
 
     @GetMapping("v1/usergroup")
     ResponseEntity<UserGroupDto> getUserGroup(@RequestParam String code) {
@@ -58,6 +62,12 @@ public class UserGroupController {
         var existingUsergroup = userGroupService.findById(id);
         if (existingUsergroup == null) {
             return ResponseEntity.status(404).body("User group not found.");
+        }
+        if (StatusEnum.INACTIVE.equals(userGroupDto.getStatus())) {
+            boolean isUserGroupUsed = userService.existsByUserGroupIdAndStatus(id, StatusEnum.ACTIVE);
+            if (isUserGroupUsed) {
+                return ResponseEntity.status(400).body("Cannot delete user group, it is being used by an active user.");
+            }
         }
         existingUsergroup.setCode(userGroupDto.getCode());
         existingUsergroup.setIsAdmin(userGroupDto.getIsAdmin());

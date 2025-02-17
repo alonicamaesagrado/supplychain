@@ -14,7 +14,6 @@ import com.informatics.supplychain.repository.ItemRepository;
 import com.informatics.supplychain.service.AssembleDetailService;
 import com.informatics.supplychain.service.AssembleService;
 import com.informatics.supplychain.service.InventoryService;
-import com.informatics.supplychain.service.ItemService;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -43,9 +42,6 @@ public class AssembleController extends BaseController {
 
     @Autowired
     InventoryService inventoryService;
-
-    @Autowired
-    ItemService itemService;
 
     @GetMapping("v1/assemble")
     public ResponseEntity<?> getAssemble(@RequestParam String transactionNo) {
@@ -170,7 +166,7 @@ public class AssembleController extends BaseController {
 
         // Updating usedQuantity in assembleDetails
         for (AssembleDetail assembleDetail : assembleDetails) {
-            double newUsedQuantity = scaleFactor; // i need to update is based on updated assembled qty * item components 
+            double newUsedQuantity = assembleDetail.getUsedQuantity() * scaleFactor; // i need to update is based on updated assembled qty * item components 
             assembleDetail.setUsedQuantity(newUsedQuantity);
             assembleDetailService.save(assembleDetail);
 
@@ -190,7 +186,7 @@ public class AssembleController extends BaseController {
 
         // Update inventory once status is COMPLETED
         if (TransactionStatusEnum.COMPLETED.equals(assembleDto.getStatus())) {
-            //inventory for finished product
+            // Update finished product inventory
             Inventory finishProductInventory = inventoryService.findByItemId(existingTransaction.getFinishProduct().getId()).stream().findFirst().orElse(null);
 
             if (finishProductInventory != null) {
@@ -205,7 +201,7 @@ public class AssembleController extends BaseController {
                 inventoryService.save(newFinishProductInventory);
             }
 
-            //inventory for raw materials
+            // Deduct inventory for raw materials
             for (AssembleDetail assembleDetail : assembleDetails) {
                 Item rawMaterial = assembleDetail.getRawMaterial();
                 List<Inventory> existingInventories = inventoryService.findByItemId(rawMaterial.getId());

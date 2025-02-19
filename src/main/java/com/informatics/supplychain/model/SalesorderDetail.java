@@ -34,6 +34,7 @@ public class SalesorderDetail {
     private Item item;
     
     private Double orderQuantity;
+    private Double stockQuantity;
     private Double itemPrice;
     private Double amount;
 
@@ -50,6 +51,7 @@ public class SalesorderDetail {
             item = new Item(dto.getItem());
         }
         orderQuantity = dto.getOrderQuantity();
+        stockQuantity = dto.getStockQuantity();
         itemPrice = dto.getItemPrice();
         amount = dto.getAmount();
     }

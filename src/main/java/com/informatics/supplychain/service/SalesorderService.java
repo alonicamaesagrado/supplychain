@@ -6,6 +6,7 @@ import com.informatics.supplychain.model.Salesorder;
 import com.informatics.supplychain.model.SalesorderDetail;
 import com.informatics.supplychain.repository.SalesorderDetailRepository;
 import com.informatics.supplychain.repository.SalesorderRepository;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,10 @@ public class SalesorderService {
     
     public List<Salesorder> findByItemId(Integer itemId) {
         return salesorderRepository.findByItemId(itemId);
+    }
+    
+    public List<Salesorder> findByStatusAndOrderDateBetween(TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate) {
+        return salesorderRepository.findByStatusAndOrderDateBetween(status, fromDate, toDate );
     }
 
     public Salesorder save(Salesorder salesorder) {

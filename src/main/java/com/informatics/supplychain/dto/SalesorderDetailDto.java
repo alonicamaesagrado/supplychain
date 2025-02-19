@@ -12,11 +12,12 @@ public class SalesorderDetailDto {
 
     public Integer id;
 
-    @JsonIgnore  // Prevents infinite recursion
+    @JsonIgnore
     private SalesorderDto salesorder;
 
     public ItemDto item;
     public Double orderQuantity;
+    public Double stockQuantity;
     public Double itemPrice;
     public Double amount;
 
@@ -29,6 +30,7 @@ public class SalesorderDetailDto {
             id = entity.getId();
             item = new ItemDto(entity.getItem());
             orderQuantity = entity.getOrderQuantity();
+            stockQuantity = entity.getStockQuantity();
             itemPrice = entity.getItemPrice();
             amount = entity.getAmount();
         }

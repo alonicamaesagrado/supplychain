@@ -11,18 +11,20 @@ import com.informatics.supplychain.service.CustomerService;
 import com.informatics.supplychain.service.InventoryService;
 import com.informatics.supplychain.service.ItemService;
 import com.informatics.supplychain.service.SalesorderService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin
-public class SalesorderController {
+public class SalesorderController extends BaseController{
 
     @Autowired
     private SalesorderService salesorderService;
@@ -47,13 +49,15 @@ public class SalesorderController {
     }
 
     @GetMapping("v1/salesorderList")
-    ResponseEntity<List<SalesorderDto>> getSalesorderList(@RequestParam(required = false) TransactionStatusEnum status) {
+    ResponseEntity<List<SalesorderDto>> getSalesorderList(@RequestParam(required = false) TransactionStatusEnum status,
+                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<Salesorder> salesorder;
-
-        if (status != null) {
-            salesorder = salesorderService.findByStatus(status);
+        
+        if (fromDate != null && toDate != null) {
+            salesorder = salesorderService.findByStatusAndOrderDateBetween(status, fromDate, toDate);
         } else {
-            salesorder = salesorderService.findAll();
+            salesorder = (status != null) ? salesorderService.findByStatus(status) : salesorderService.findAll();
         }
         List<SalesorderDto> salesorderDtos = salesorder.stream().map(SalesorderDto::new).collect(Collectors.toList());
         return ResponseEntity.ok(salesorderDtos);
@@ -70,7 +74,10 @@ public class SalesorderController {
     }
 
     @PostMapping("v1/salesorder")
-    public ResponseEntity<?> saveSalesorder(@RequestBody SalesorderDto salesorderDto) throws Exception {
+    public ResponseEntity<?> saveSalesorder(@RequestHeader String usercode, @RequestHeader String token, @RequestBody SalesorderDto salesorderDto) throws Exception {
+        if (!verify(usercode, token)) {
+            return ResponseEntity.badRequest().build();
+        }
         if (salesorderDto.getOrderDate() == null) {
             return ResponseEntity.status(400).body("Order date cannot be null.");
         }
@@ -85,12 +92,15 @@ public class SalesorderController {
         salesorder.setSalesorderNo(salesorderNo);
         salesorder.setStatus(TransactionStatusEnum.DRAFT);
         salesorder.setCreatedDateTime(LocalDateTime.now());
-
+        salesorder.setCreatedBy(usercode);
         salesorder.setDetails(new ArrayList<>());
 
-        //validations and creation on inventory
         for (SalesorderDetailDto detailDto : salesorderDto.getDetails()) {
+            //validations and creation on inventory
             var item = itemService.findByCode(detailDto.getItem().getCode());
+            if (detailDto.getItem() == null) {
+                return ResponseEntity.status(400).body("Item cannot be null.");
+            }
             if (item == null) {
                 return ResponseEntity.status(404).body("Item does not exist: " + detailDto.getItem().getCode());
             }
@@ -102,6 +112,7 @@ public class SalesorderController {
                 inventory.setItemType(item.getCategory());
                 inventory.setInQuantity(0.0);
             }
+            double availableStock = inventory.getInQuantity() - inventory.getOutQuantity();
             if (detailDto.getOrderQuantity() > (inventory.getInQuantity() - inventory.getOutQuantity())) {
                 return ResponseEntity.status(404).body("Cannot deliver more than available quantity.");
             }
@@ -113,13 +124,14 @@ public class SalesorderController {
             detail.setSalesorder(salesorder);
             detail.setItem(item);
             detail.setOrderQuantity(detailDto.getOrderQuantity());
+            detail.setStockQuantity(availableStock);
             detail.setItemPrice(itemPrice);
             detail.setAmount(detailDto.getOrderQuantity() * itemPrice);
             salesorder.getDetails().add(detail);
         }
         salesorder = salesorderService.save(salesorder);
 
-        // Updating inventory
+        //update on inventory balance
         for (SalesorderDetail detail : salesorder.getDetails()) {
             var inventory = inventoryService.findByItemIdAndItemType(detail.getItem().getId(), detail.getItem().getCategory());
             inventory.setOutQuantity(inventory.getOutQuantity() + detail.getOrderQuantity());
@@ -160,7 +172,7 @@ public class SalesorderController {
             var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
             double previousOrderQuantity = detail.getOrderQuantity();
             double quantityDifference = detailDto.getOrderQuantity() - previousOrderQuantity;
-            
+
             //validations
             if (detail == null) {
                 return ResponseEntity.status(404).body("Sales order detail not found.");

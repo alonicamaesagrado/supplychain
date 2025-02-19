@@ -135,7 +135,11 @@ public class ItemController {
             ItemComponents itemComponent = new ItemComponents();
             itemComponent.setFinishProduct(savedFinishProduct);
             itemComponent.setRawMaterial(rawMaterial);
-            itemComponent.setQuantity(componentDto.getQuantity());
+            if (componentDto.getQuantity() == null) {
+                return ResponseEntity.status(404).body("Quantity for item components cannot be empty!");
+            } else {
+                itemComponent.setQuantity(componentDto.getQuantity());
+            }
             itemComponentsService.save(itemComponent);
         }
 

@@ -50,8 +50,8 @@ public class StockInController extends BaseController {
 
     @GetMapping("v1/stockInList")
     ResponseEntity<List<StockInDto>> getStockInList(@RequestParam(required = false) TransactionStatusEnum status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<StockIn> stockIn;
         if (fromDate != null && toDate != null) {
             stockIn = stockInService.findByStatusAndTransactionDateBetween(status, fromDate, toDate);
@@ -63,8 +63,15 @@ public class StockInController extends BaseController {
     }
 
     @GetMapping("v1/stockInList/{itemId}")
-    public ResponseEntity<List<StockIn>> getStockInByItemId(@PathVariable Integer itemId) {
+    public ResponseEntity<List<StockIn>> getStockInByItemId(@PathVariable Integer itemId, @RequestParam(required = false) TransactionStatusEnum status, 
+                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<StockIn> stockIns = stockInService.findByItemId(itemId);
+        if (fromDate != null && toDate != null) {
+            stockIns = stockInService.findByItemAndStatusAndTransactionDateBetween(itemId, status, fromDate, toDate);
+        } else {
+            stockIns = (status != null) ? stockInService.findByItemAndStatus(itemId, status) : stockInService.findByItemId(itemId);
+        }
         return ResponseEntity.ok(stockIns);
     }
 

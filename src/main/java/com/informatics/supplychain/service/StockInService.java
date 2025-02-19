@@ -29,6 +29,10 @@ public class StockInService {
     public List<StockIn> findByItemAndStatus(Integer itemId, TransactionStatusEnum status) {
         return stockInRepository.findByItemAndStatus(itemId, status);
     }
+    
+    public List<StockIn> findByItemAndStatusAndTransactionDateBetween(Integer itemId, TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate) {
+        return stockInRepository.findByItemIdAndStatusAndTransactionDateBetween(itemId, status, fromDate, toDate );
+    }
 
     public List<StockIn> findByStatus(TransactionStatusEnum status) {
         return stockInRepository.findByStatus(status);

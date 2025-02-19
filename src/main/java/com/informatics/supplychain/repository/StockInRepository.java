@@ -22,4 +22,6 @@ public interface StockInRepository extends JpaRepository<StockIn, Integer> {
     List<StockIn> findByItemId(@Param("itemId") Integer itemId);
 
     List<StockIn> findByItemAndStatus(@Param("itemId") Integer itemId, @Param("status") TransactionStatusEnum status);
+    
+    List<StockIn> findByItemIdAndStatusAndTransactionDateBetween(@Param("itemId") Integer itemId, TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate);
 }

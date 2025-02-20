@@ -50,12 +50,17 @@ public class SalesorderController extends BaseController{
 
     @GetMapping("v1/salesorderList")
     ResponseEntity<List<SalesorderDto>> getSalesorderList(@RequestParam(required = false) TransactionStatusEnum status,
+                                                          @RequestParam(required = false) Integer customerId,
                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
                                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<Salesorder> salesorder;
         
         if (fromDate != null && toDate != null) {
             salesorder = (status != null) ? salesorderService.findByStatusAndOrderDateBetween(status, fromDate, toDate) : salesorderService.findByOrderDateBetween(fromDate, toDate);
+        } else if (customerId != null) {
+            salesorder = salesorderService.findByCustomerId(customerId);
+        } else if (customerId != null && fromDate != null && toDate != null) {
+            salesorder = (status != null) ? salesorderService.findByCustomerIdAndStatusAndOrderDateBetween(customerId, status, fromDate, toDate) : salesorderService.findByCustomerIdAndOrderDateBetween(customerId, fromDate, toDate);
         } else {
             salesorder = (status != null) ? salesorderService.findByStatus(status) : salesorderService.findAll();
         }

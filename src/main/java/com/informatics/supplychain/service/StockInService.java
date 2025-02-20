@@ -41,6 +41,10 @@ public class StockInService {
     public List<StockIn> findByStatusAndTransactionDateBetween(TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate) {
         return stockInRepository.findByStatusAndTransactionDateBetween(status, fromDate, toDate );
     }
+    
+    public List<StockIn> findByTransactionDateBetween(LocalDate fromDate, LocalDate toDate) {
+        return stockInRepository.findByTransactionDateBetween(fromDate, toDate );
+    }
 
     public List<StockIn> findAll() {
         return stockInRepository.findAll();

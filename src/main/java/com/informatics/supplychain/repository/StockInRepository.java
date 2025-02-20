@@ -14,6 +14,8 @@ public interface StockInRepository extends JpaRepository<StockIn, Integer> {
 
     List<StockIn> findByStatus(TransactionStatusEnum status);
 
+    List<StockIn> findByTransactionDateBetween(LocalDate fromDate, LocalDate toDate);
+    
     List<StockIn> findByStatusAndTransactionDateBetween(TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate);
 
     @Query(value = "SELECT s.transaction_no FROM stock_in s WHERE s.transaction_no LIKE CONCAT('STI', :yearMonth, '%') ORDER BY s.transaction_no DESC LIMIT 1", nativeQuery = true)

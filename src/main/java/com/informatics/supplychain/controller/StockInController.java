@@ -54,7 +54,7 @@ public class StockInController extends BaseController {
                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<StockIn> stockIn;
         if (fromDate != null && toDate != null) {
-            stockIn = stockInService.findByStatusAndTransactionDateBetween(status, fromDate, toDate);
+            stockIn = (status != null) ? stockInService.findByStatusAndTransactionDateBetween(status, fromDate, toDate) :  stockInService.findByTransactionDateBetween(fromDate, toDate);
         } else {
             stockIn = (status != null) ? stockInService.findByStatus(status) : stockInService.findAll();
         }

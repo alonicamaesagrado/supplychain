@@ -55,7 +55,7 @@ public class SalesorderController extends BaseController{
         List<Salesorder> salesorder;
         
         if (fromDate != null && toDate != null) {
-            salesorder = salesorderService.findByStatusAndOrderDateBetween(status, fromDate, toDate);
+            salesorder = (status != null) ? salesorderService.findByStatusAndOrderDateBetween(status, fromDate, toDate) : salesorderService.findByOrderDateBetween(fromDate, toDate);
         } else {
             salesorder = (status != null) ? salesorderService.findByStatus(status) : salesorderService.findAll();
         }

@@ -39,6 +39,10 @@ public class SalesorderService {
         return salesorderRepository.findByItemId(itemId);
     }
     
+    public List<Salesorder> findByOrderDateBetween(LocalDate fromDate, LocalDate toDate) {
+        return salesorderRepository.findByOrderDateBetween(fromDate, toDate );
+    }
+    
     public List<Salesorder> findByStatusAndOrderDateBetween(TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate) {
         return salesorderRepository.findByStatusAndOrderDateBetween(status, fromDate, toDate );
     }

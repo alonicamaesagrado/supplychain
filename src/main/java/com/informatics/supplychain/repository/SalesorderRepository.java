@@ -14,6 +14,8 @@ public interface SalesorderRepository extends JpaRepository<Salesorder, Integer>
 
     List<Salesorder> findByStatus(TransactionStatusEnum status);
     
+    List<Salesorder> findByOrderDateBetween(LocalDate fromDate, LocalDate toDate);
+    
     List<Salesorder> findByStatusAndOrderDateBetween(TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate);
 
     @Query(value = "SELECT a.salesorder_no FROM salesorder a WHERE a.salesorder_no LIKE CONCAT('SO', :yearMonth, '%') ORDER BY a.salesorder_no DESC LIMIT 1", nativeQuery = true)

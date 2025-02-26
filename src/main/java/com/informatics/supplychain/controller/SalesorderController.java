@@ -1,7 +1,9 @@
 package com.informatics.supplychain.controller;
 
 import com.informatics.supplychain.dto.SalesorderDetailDto;
+import com.informatics.supplychain.dto.SalesorderDetailForArimaDto;
 import com.informatics.supplychain.dto.SalesorderDto;
+import com.informatics.supplychain.dto.SalesorderForArimaDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import com.informatics.supplychain.enums.TransactionStatusEnum;
 import com.informatics.supplychain.model.Inventory;
@@ -66,6 +68,21 @@ public class SalesorderController extends BaseController{
         }
         List<SalesorderDto> salesorderDtos = salesorder.stream().map(SalesorderDto::new).collect(Collectors.toList());
         return ResponseEntity.ok(salesorderDtos);
+    }
+    
+    @GetMapping("v1/salesorderForArima")
+    ResponseEntity<List<SalesorderForArimaDto>> getSalesorderForArima(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        List<Salesorder> salesorder;
+        
+        if (fromDate != null && toDate != null) {
+            salesorder = salesorderService.findByOrderDateBetween(fromDate, toDate);
+        } else {
+            salesorder = salesorderService.findAll();
+        }
+        List<SalesorderForArimaDto> salesorderForArimaDtos = salesorder.stream().map(e -> new SalesorderForArimaDto(e, 
+                                    e.getDetails().stream().map(x -> new SalesorderDetailForArimaDto(x)).collect(Collectors.toList()))).collect(Collectors.toList());
+        return ResponseEntity.ok(salesorderForArimaDtos);
     }
 
     @GetMapping("v1/salesorderList/{itemId}")

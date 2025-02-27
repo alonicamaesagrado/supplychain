@@ -19,6 +19,7 @@ public class ItemDto {
     public Double reorderPoint;
     public Double price;
     public Double cost;
+    public Double averageCost;
     public StatusEnum status;
     
     public ItemDto() {
@@ -36,6 +37,7 @@ public class ItemDto {
             reorderPoint = entity.getReorderPoint();
             price = entity.getPrice();
             cost = entity.getCost();
+            averageCost = entity.getAverageCost();
             status = entity.getStatus();
         }
     }

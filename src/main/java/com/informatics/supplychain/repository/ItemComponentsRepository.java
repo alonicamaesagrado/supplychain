@@ -9,5 +9,7 @@ public interface ItemComponentsRepository extends JpaRepository<ItemComponents, 
     
     List<ItemComponents> findByFinishProduct(Item finishProduct);
     
+    List<ItemComponents> findByRawMaterial(Item rawMaterial);
+    
     List<ItemComponents> findByFinishProductId(Integer finishProductId);
 }

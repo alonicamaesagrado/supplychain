@@ -16,6 +16,10 @@ public class ItemComponentsService {
     public List<ItemComponents> findByFinishProduct(Item finishProduct) {
         return itemComponentsRepository.findByFinishProduct(finishProduct);
     }
+    
+    public List<ItemComponents> findByRawMaterial(Item rawMaterial) {
+        return itemComponentsRepository.findByRawMaterial(rawMaterial);
+    }
 
     public ItemComponents save(ItemComponents itemComponent) {
         return itemComponentsRepository.save(itemComponent);

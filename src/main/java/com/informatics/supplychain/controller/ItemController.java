@@ -98,6 +98,7 @@ public class ItemController {
         item.setReorderPoint(itemDto.getReorderPoint());
         item.setPrice(itemDto.getPrice());
         item.setCost(itemDto.getCost());
+        item.setAverageCost(0.0);
         return ResponseEntity.ok(new ItemDto(itemService.save(item)));
     }
 
@@ -106,15 +107,21 @@ public class ItemController {
 
         //validations
         Item existingItem = itemService.findByCode(itemComponentsDto.getFinishProduct().getCode());
+        double totalCost = 0.0;
         if (existingItem != null) {
             return ResponseEntity.status(400).body("Finish product code already exists.");
         }
 
         for (ItemComponentsDto.Component componentDto : itemComponentsDto.getComponents()) {
             Item rawMaterial = itemService.findByCode(componentDto.getRawMaterial().getCode());
+            double rawMaterialCost = rawMaterial.getCost();
+            double quantityUsed = componentDto.getQuantity();
+
             if (rawMaterial == null) {
                 return ResponseEntity.status(400).body("Raw material code " + componentDto.getRawMaterial().getCode() + " does not exist!");
             }
+            //set average cost based on raw mats
+            totalCost += rawMaterialCost * quantityUsed;
         }
 
         //creation of main item
@@ -127,6 +134,7 @@ public class ItemController {
         finishProduct.setReorderPoint(itemComponentsDto.getFinishProduct().getReorderPoint());
         finishProduct.setPrice(itemComponentsDto.getFinishProduct().getPrice());
         finishProduct.setCost(itemComponentsDto.getFinishProduct().getCost());
+        finishProduct.setAverageCost(totalCost > 0 ? totalCost : 0.0);
         Item savedFinishProduct = itemService.save(finishProduct);
 
         //creation of raw materials
@@ -198,6 +206,24 @@ public class ItemController {
 
         var updatedItem = itemService.save(existingItem);
 
+        //check all finish products that use this raw material
+        List<ItemComponents> affectedComponents = itemComponentsService.findByRawMaterial(existingItem);
+        for (ItemComponents component : affectedComponents) {
+            Item finishProduct = component.getFinishProduct();
+            
+            double totalCost = 0.0;
+            List<ItemComponents> components = itemComponentsService.findByFinishProduct(finishProduct);
+            for (ItemComponents comp : components) {
+                Item rawMaterial = comp.getRawMaterial();
+                double rawMaterialCost = rawMaterial.getCost(); // Fetch latest cost
+                double quantityUsed = comp.getQuantity();
+
+                totalCost += rawMaterialCost * quantityUsed;
+            }
+            double averageCost = totalCost > 0 ? totalCost : 0;
+            finishProduct.setAverageCost(averageCost);
+            itemService.save(finishProduct);
+        }
         return ResponseEntity.ok(new ItemDto(updatedItem));
     }
 }

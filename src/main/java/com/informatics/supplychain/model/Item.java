@@ -36,6 +36,7 @@ public class Item {
     private Double reorderPoint;
     private Double price;
     private Double cost;
+    private Double averageCost;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     

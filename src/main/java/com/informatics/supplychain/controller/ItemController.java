@@ -215,7 +215,7 @@ public class ItemController {
             List<ItemComponents> components = itemComponentsService.findByFinishProduct(finishProduct);
             for (ItemComponents comp : components) {
                 Item rawMaterial = comp.getRawMaterial();
-                double rawMaterialCost = rawMaterial.getCost(); // Fetch latest cost
+                double rawMaterialCost = rawMaterial.getCost();
                 double quantityUsed = comp.getQuantity();
 
                 totalCost += rawMaterialCost * quantityUsed;

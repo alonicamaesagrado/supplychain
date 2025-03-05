@@ -18,7 +18,7 @@ public interface StockOutRepository extends JpaRepository<StockOut, Integer> {
     
     List<StockOut> findByStatusAndTransactionDateBetween(TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate);
 
-    @Query(value = "SELECT s.transaction_no FROM stock_out s WHERE s.transaction_no LIKE CONCAT('STI', :yearMonth, '%') ORDER BY s.transaction_no DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT s.transaction_no FROM stock_out s WHERE s.transaction_no LIKE CONCAT('STO', :yearMonth, '%') ORDER BY s.transaction_no DESC LIMIT 1", nativeQuery = true)
     String findLastTransactionNoByYearMonth(@Param("yearMonth") String yearMonth);
 
     List<StockOut> findByItemId(@Param("itemId") Integer itemId);

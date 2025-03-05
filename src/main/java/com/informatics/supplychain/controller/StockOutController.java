@@ -134,7 +134,7 @@ public class StockOutController extends BaseController {
                 inventory.setInQuantity(0.0);
                 inventory.setOutQuantity(stockOutDto.getQuantity() != null ? stockOutDto.getQuantity() : existingTransaction.getQuantity());
             } else {
-                inventory.setInQuantity(inventory.getInQuantity() + updatedQuantity);
+                inventory.setOutQuantity(inventory.getOutQuantity() + updatedQuantity);
             }
             inventoryService.save(inventory);
         }

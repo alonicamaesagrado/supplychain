@@ -99,6 +99,9 @@ public class StockInController extends BaseController {
             return ResponseEntity.status(404).body("Item does not exist!");
         }
         stockIn.setItem(item);
+        if (stockInDto.getQuantity() <= 0) {
+            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
+        }
         stockIn.setQuantity(stockInDto.getQuantity());
         stockIn.setBatchNo(stockInDto.getBatchNo());
         stockIn.setCreatedDateTime(LocalDateTime.now());
@@ -138,6 +141,9 @@ public class StockInController extends BaseController {
 
         //update stock in details
         existingTransaction.setRemarks(stockInDto.getRemarks());
+        if (stockInDto.getQuantity() <= 0) {
+            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
+        }
         existingTransaction.setQuantity(stockInDto.getQuantity() == null ? existingTransaction.getQuantity() : stockInDto.getQuantity());
         existingTransaction.setBatchNo(stockInDto.getBatchNo());
         existingTransaction.setStatus(stockInDto.getStatus());

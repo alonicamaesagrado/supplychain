@@ -99,6 +99,9 @@ public class AssembleController extends BaseController {
         if (itemComponents.isEmpty()) {
             return ResponseEntity.status(404).body("No raw materials found for the provided finish product.");
         }
+        if (assembleDto.getAssemble_quantity() <= 0) {
+            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
+        }
 
         //checking of raw mats stocks
         List<String> insufficientStocks = new ArrayList<>();
@@ -155,6 +158,9 @@ public class AssembleController extends BaseController {
         }
         if (TransactionStatusEnum.COMPLETED.equals(existingTransaction.getStatus())) {
             return ResponseEntity.status(400).body("Cannot edit completed transactions!");
+        }
+        if (assembleDto.getAssemble_quantity() <= 0) {
+            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
         }
 
         List<AssembleDetail> assembleDetails = assembleDetailService.findByAssemble(existingTransaction);

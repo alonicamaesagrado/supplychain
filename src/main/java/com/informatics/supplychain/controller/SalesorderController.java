@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin
-public class SalesorderController extends BaseController{
+public class SalesorderController extends BaseController {
 
     @Autowired
     private SalesorderService salesorderService;
@@ -52,11 +52,11 @@ public class SalesorderController extends BaseController{
 
     @GetMapping("v1/salesorderList")
     ResponseEntity<List<SalesorderDto>> getSalesorderList(@RequestParam(required = false) TransactionStatusEnum status,
-                                                          @RequestParam(required = false) Integer customerId,
-                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(required = false) Integer customerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<Salesorder> salesorder;
-        
+
         if (fromDate != null && toDate != null) {
             salesorder = (status != null) ? salesorderService.findByStatusAndOrderDateBetween(status, fromDate, toDate) : salesorderService.findByOrderDateBetween(fromDate, toDate);
         } else if (customerId != null) {
@@ -69,19 +69,19 @@ public class SalesorderController extends BaseController{
         List<SalesorderDto> salesorderDtos = salesorder.stream().map(SalesorderDto::new).collect(Collectors.toList());
         return ResponseEntity.ok(salesorderDtos);
     }
-    
+
     @GetMapping("v1/salesorderForArima")
     ResponseEntity<List<SalesorderForArimaDto>> getSalesorderForArima(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<Salesorder> salesorder;
-        
+
         if (fromDate != null && toDate != null) {
             salesorder = salesorderService.findByOrderDateBetween(fromDate, toDate);
         } else {
             salesorder = salesorderService.findAll();
         }
-        List<SalesorderForArimaDto> salesorderForArimaDtos = salesorder.stream().map(e -> new SalesorderForArimaDto(e, 
-                                    e.getDetails().stream().map(x -> new SalesorderDetailForArimaDto(x)).collect(Collectors.toList()))).collect(Collectors.toList());
+        List<SalesorderForArimaDto> salesorderForArimaDtos = salesorder.stream().map(e -> new SalesorderForArimaDto(e,
+                e.getDetails().stream().map(x -> new SalesorderDetailForArimaDto(x)).collect(Collectors.toList()))).collect(Collectors.toList());
         return ResponseEntity.ok(salesorderForArimaDtos);
     }
 
@@ -145,6 +145,9 @@ public class SalesorderController extends BaseController{
 
             detail.setSalesorder(salesorder);
             detail.setItem(item);
+            if (detailDto.getOrderQuantity() <= 0) {
+                return ResponseEntity.status(404).body("Quantity should be greater than zero.");
+            }
             detail.setOrderQuantity(detailDto.getOrderQuantity());
             detail.setStockQuantity(availableStock);
             detail.setItemPrice(itemPrice);
@@ -210,12 +213,15 @@ public class SalesorderController extends BaseController{
             }
 
             //salesorder details
-            detail.setOrderQuantity(detailDto.getOrderQuantity()); // order quantity
-            if (detailDto.getItemPrice() != null) {
-                detail.setItemPrice(detailDto.getItemPrice()); // item price
+            if (detailDto.getOrderQuantity() <= 0) {
+                return ResponseEntity.status(404).body("Quantity should be greater than zero.");
             }
-            detail.setAmount(detail.getOrderQuantity() * detail.getItemPrice()); //amount
-            inventory.setOutQuantity(inventory.getOutQuantity() + quantityDifference); //update out quantity in inventory
+            detail.setOrderQuantity(detailDto.getOrderQuantity());
+            if (detailDto.getItemPrice() != null) {
+                detail.setItemPrice(detailDto.getItemPrice()); 
+            }
+            detail.setAmount(detail.getOrderQuantity() * detail.getItemPrice()); 
+            inventory.setOutQuantity(inventory.getOutQuantity() + quantityDifference);
             inventoryService.save(inventory);
         }
         salesorder = salesorderService.save(salesorder);

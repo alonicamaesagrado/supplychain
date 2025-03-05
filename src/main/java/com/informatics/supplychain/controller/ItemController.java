@@ -143,7 +143,9 @@ public class ItemController {
             ItemComponents itemComponent = new ItemComponents();
             itemComponent.setFinishProduct(savedFinishProduct);
             itemComponent.setRawMaterial(rawMaterial);
-            if (componentDto.getQuantity() == null) {
+            if (componentDto.getQuantity() <= 0) {
+                return ResponseEntity.status(404).body("Quantity for item components should be greater than zero.");
+            } else if (componentDto.getQuantity() == null) {
                 return ResponseEntity.status(404).body("Quantity for item components cannot be empty!");
             } else {
                 itemComponent.setQuantity(componentDto.getQuantity());
@@ -210,7 +212,7 @@ public class ItemController {
         List<ItemComponents> affectedComponents = itemComponentsService.findByRawMaterial(existingItem);
         for (ItemComponents component : affectedComponents) {
             Item finishProduct = component.getFinishProduct();
-            
+
             double totalCost = 0.0;
             List<ItemComponents> components = itemComponentsService.findByFinishProduct(finishProduct);
             for (ItemComponents comp : components) {

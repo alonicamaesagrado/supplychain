@@ -68,7 +68,7 @@ public class StockOutController extends BaseController {
                                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<StockOut> stockOuts = stockOutService.findByItemId(itemId);
         if (fromDate != null && toDate != null) {
-            stockOuts = stockOutService.findByItemAndStatusAndTransactionDateBetween(itemId, status, fromDate, toDate);
+            stockOuts = (status != null) ? stockOutService.findByItemAndStatusAndTransactionDateBetween(itemId, status, fromDate, toDate) : stockOutService.findByItemAndTransactionDateBetween(itemId, fromDate, toDate);
         } else {
             stockOuts = (status != null) ? stockOutService.findByItemAndStatus(itemId, status) : stockOutService.findByItemId(itemId);
         }

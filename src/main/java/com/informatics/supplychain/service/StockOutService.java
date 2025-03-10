@@ -33,6 +33,10 @@ public class StockOutService {
     public List<StockOut> findByItemAndStatusAndTransactionDateBetween(Integer itemId, TransactionStatusEnum status, LocalDate fromDate, LocalDate toDate) {
         return stockOutRepository.findByItemIdAndStatusAndTransactionDateBetween(itemId, status, fromDate, toDate );
     }
+    
+    public List<StockOut> findByItemAndTransactionDateBetween(Integer itemId, LocalDate fromDate, LocalDate toDate) {
+        return stockOutRepository.findByItemIdAndTransactionDateBetween(itemId, fromDate, toDate );
+    }
 
     public List<StockOut> findByStatus(TransactionStatusEnum status) {
         return stockOutRepository.findByStatus(status);

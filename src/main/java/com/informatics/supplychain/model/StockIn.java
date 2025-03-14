@@ -41,6 +41,7 @@ public class StockIn {
 
     private Double quantity;
     private String batchNo;
+    public LocalDate expiDate;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatusEnum status;

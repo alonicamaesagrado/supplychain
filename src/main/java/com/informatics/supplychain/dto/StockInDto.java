@@ -20,6 +20,7 @@ public class StockInDto {
     public ItemDto item;
     public Double quantity;
     public String batchNo;
+    public LocalDate expiryDate;
     public TransactionStatusEnum status;
     private LocalDateTime createdDateTime;
     private String createdBy;

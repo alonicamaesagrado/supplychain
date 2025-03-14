@@ -44,12 +44,12 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryDtos);
     }
 
-    @GetMapping("v1/stock-card/{itemId}")
+    @GetMapping("v1/stockcard/{itemId}")
     public ResponseEntity<?> getStockCardByItemId(@PathVariable Integer itemId) {
         List<StockCardDto> stockCard = stockCardService.getStockCardByItemId(itemId);
 
         if (stockCard.isEmpty()) {
-            return ResponseEntity.status(404).body("No stock card not found for item.");
+            return ResponseEntity.status(404).body("No transactions found for item.");
         }
         return ResponseEntity.ok(stockCard);
     }

@@ -49,7 +49,7 @@ public class InventoryController {
         List<StockCardDto> stockCard = stockCardService.getStockCardByItemId(itemId);
 
         if (stockCard.isEmpty()) {
-            return ResponseEntity.status(404).body("No transactions found for item.");
+            return ResponseEntity.status(404).body("No transactions found for this item.");
         }
         return ResponseEntity.ok(stockCard);
     }

@@ -9,11 +9,13 @@ import com.informatics.supplychain.model.AssembleDetail;
 import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.model.Item;
 import com.informatics.supplychain.model.ItemComponents;
+import com.informatics.supplychain.model.StockIn;
 import com.informatics.supplychain.repository.ItemComponentsRepository;
 import com.informatics.supplychain.repository.ItemRepository;
 import com.informatics.supplychain.service.AssembleDetailService;
 import com.informatics.supplychain.service.AssembleService;
 import com.informatics.supplychain.service.InventoryService;
+import com.informatics.supplychain.service.StockInService;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,6 +45,9 @@ public class AssembleController extends BaseController {
 
     @Autowired
     InventoryService inventoryService;
+    
+    @Autowired
+    StockInService stockInService;
 
     @GetMapping("v1/assemble")
     public ResponseEntity<?> getAssemble(@RequestParam String transactionNo) {
@@ -207,10 +213,14 @@ public class AssembleController extends BaseController {
                 inventoryService.save(newFinishProductInventory);
             }
 
-            // Deduct inventory for raw materials
+            //deduct inventory for raw materials
             for (AssembleDetail assembleDetail : assembleDetails) {
                 Item rawMaterial = assembleDetail.getRawMaterial();
                 List<Inventory> existingInventories = inventoryService.findByItemId(rawMaterial.getId());
+                List<StockIn> stockInTransactions = stockInService.findByItemId(rawMaterial.getId())
+                        .stream()
+                        .sorted(Comparator.comparing(StockIn::getExpiryDate))
+                        .collect(Collectors.toList());
 
                 if (!existingInventories.isEmpty()) {
                     Inventory existingInventory = existingInventories.get(0);
@@ -222,6 +232,22 @@ public class AssembleController extends BaseController {
                     rawMaterialInventory.setItemType(rawMaterial.getCategory());
                     rawMaterialInventory.setOutQuantity(assembleDetail.getUsedQuantity());
                     inventoryService.save(rawMaterialInventory);
+                }
+            //update issued quantity on stock in to implement FIFO    
+            double remainingRequired = assembleDetail.getUsedQuantity();
+                for (StockIn stockIn : stockInTransactions) {
+                    double availableQuantity = stockIn.getQuantity() - stockIn.getIssuedQuantity();
+                    if (availableQuantity > 0) {
+                        double usedQuantity = Math.min(remainingRequired, availableQuantity);
+
+                        stockIn.setIssuedQuantity(stockIn.getIssuedQuantity() + usedQuantity);
+                        stockInService.save(stockIn);
+
+                        remainingRequired -= usedQuantity;
+                        if (remainingRequired <= 0) {
+                            break;
+                        }
+                    }
                 }
             }
         }

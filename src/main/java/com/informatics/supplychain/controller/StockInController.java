@@ -104,6 +104,10 @@ public class StockInController extends BaseController {
         }
         stockIn.setQuantity(stockInDto.getQuantity());
         stockIn.setBatchNo(stockInDto.getBatchNo());
+        if (stockInDto.getExpiryDate() == null) {
+            return ResponseEntity.status(404).body("Value required for expiry date.");
+        }
+        stockIn.setExpiryDate(stockInDto.getExpiryDate());
         stockIn.setCreatedDateTime(LocalDateTime.now());
         stockIn.setCreatedBy(usercode);
         stockIn = stockInService.save(stockIn);
@@ -146,6 +150,10 @@ public class StockInController extends BaseController {
         }
         existingTransaction.setQuantity(stockInDto.getQuantity() == null ? existingTransaction.getQuantity() : stockInDto.getQuantity());
         existingTransaction.setBatchNo(stockInDto.getBatchNo());
+        if (stockInDto.getExpiryDate() == null) {
+            return ResponseEntity.status(404).body("Value required for expiry date.");
+        }
+        existingTransaction.setExpiryDate(stockInDto.getExpiryDate());
         existingTransaction.setStatus(stockInDto.getStatus());
         existingTransaction = stockInService.save(existingTransaction);
 

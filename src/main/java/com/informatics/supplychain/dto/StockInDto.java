@@ -19,6 +19,7 @@ public class StockInDto {
     public String remarks;
     public ItemDto item;
     public Double quantity;
+    public Double issuedQuantity;
     public String batchNo;
     public LocalDate expiryDate;
     public TransactionStatusEnum status;
@@ -38,7 +39,9 @@ public class StockInDto {
                 item = new ItemDto(entity.getItem());
             }
             quantity = entity.getQuantity();
+            issuedQuantity = entity.getIssuedQuantity();
             batchNo = entity.getBatchNo();
+            expiryDate = entity.getExpiryDate();
             status = entity.getStatus();
             createdDateTime = entity.getCreatedDateTime();
             createdBy = entity.getCreatedBy();

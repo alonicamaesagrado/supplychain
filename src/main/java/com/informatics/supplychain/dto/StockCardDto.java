@@ -14,9 +14,9 @@ public class StockCardDto {
     private String transactionNo;
     private Double stockIn;
     private Double stockOut;
-    private Integer runningBalance;
+    private Double runningBalance;
 
-    public StockCardDto(Integer itemId, LocalDate date, String transactionNo, Double stockIn, Double stockOut, Integer runningBalance) {
+    public StockCardDto(Integer itemId, LocalDate date, String transactionNo, Double stockIn, Double stockOut, Double runningBalance) {
         this.itemId = itemId;
         this.date = date;
         this.transactionNo = transactionNo;

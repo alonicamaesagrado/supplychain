@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 public interface AssembleRepository extends JpaRepository<Assemble, Integer> {
 
     public Assemble findByTransactionNo(String transactionNo);
+    
+    List<Assemble> findByFinishProduct_Id(Integer itemId);
 
     @Query("SELECT a FROM Assemble a WHERE a.finishProduct.id = :itemId")
     List<Assemble> findByFinishProductId(@Param("itemId") Integer itemId);

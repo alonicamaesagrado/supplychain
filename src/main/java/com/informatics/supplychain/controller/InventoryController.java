@@ -1,8 +1,10 @@
 package com.informatics.supplychain.controller;
 
 import com.informatics.supplychain.dto.InventoryDto;
+import com.informatics.supplychain.dto.StockCardDto;
 import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.service.InventoryService;
+import com.informatics.supplychain.service.StockCardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,9 @@ public class InventoryController {
 
     @Autowired
     private InventoryService inventoryService;
+    
+    @Autowired
+    private StockCardService stockCardService;
 
     @GetMapping("v1/inventory/{itemId}")
     public ResponseEntity<?> getInventoryByItemId(@PathVariable Integer itemId) {
@@ -38,4 +43,15 @@ public class InventoryController {
         List<InventoryDto> inventoryDtos = inventory.stream().map(InventoryDto::new).collect(Collectors.toList());
         return ResponseEntity.ok(inventoryDtos);
     }
+
+    @GetMapping("v1/stock-card/{itemId}")
+    public ResponseEntity<?> getStockCardByItemId(@PathVariable Integer itemId) {
+        List<StockCardDto> stockCard = stockCardService.getStockCardByItemId(itemId);
+
+        if (stockCard.isEmpty()) {
+            return ResponseEntity.status(404).body("No stock card not found for item.");
+        }
+        return ResponseEntity.ok(stockCard);
+    }
+
 }

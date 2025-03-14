@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AssembleDetailRepository extends JpaRepository<AssembleDetail, Integer> {
     
     List<AssembleDetail> findByAssemble(Assemble assemble);
+    
+    List<AssembleDetail> findByRawMaterial_Id(Integer itemId);
 }

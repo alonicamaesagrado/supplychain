@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 public interface StockInRepository extends JpaRepository<StockIn, Integer> {
 
     public StockIn findByTransactionNo(String transactionNo);
+    
+    List<StockIn> findByItem_Id(Integer itemId);
 
     List<StockIn> findByStatus(TransactionStatusEnum status);
 

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -227,5 +228,35 @@ public class ItemController {
             itemService.save(finishProduct);
         }
         return ResponseEntity.ok(new ItemDto(updatedItem));
+    }
+
+    @PutMapping("v1/item-with-components/{finishProductId}")
+    public ResponseEntity<?> updateItemWithComponents(@PathVariable Integer finishProductId, @RequestBody ItemComponentsDto itemComponentsDto) {
+        for (ItemComponentsDto.Component componentDto : itemComponentsDto.getComponents()) {
+            Item rawMaterial = itemService.findByCode(componentDto.getRawMaterial().getCode());
+
+            if (rawMaterial == null) {
+                return ResponseEntity.status(400).body("Raw material code " + componentDto.getRawMaterial().getCode() + " does not exist!");
+            }
+
+            Optional<ItemComponents> existingComponent = itemComponentsService.findByFinishProductAndRawMaterial(finishProductId, rawMaterial.getId());
+            if (existingComponent.isPresent()) {
+                ItemComponents itemComponent = existingComponent.get();
+                if (componentDto.getQuantity() != null) {
+                    if (componentDto.getQuantity() <= 0) {
+                        return ResponseEntity.status(400).body("Quantity for item components should be greater than zero.");
+                    }
+                    itemComponent.setQuantity(componentDto.getQuantity());
+                }
+//                if (componentDto.getStatus() != null) {
+//                    itemComponent.setStatus(componentDto.getStatus());
+//                }
+                itemComponentsService.save(itemComponent);
+            } else {
+                return ResponseEntity.status(404).body("Component not found for update.");
+            }
+        }
+
+        return ResponseEntity.ok("Components updated successfully.");
     }
 }

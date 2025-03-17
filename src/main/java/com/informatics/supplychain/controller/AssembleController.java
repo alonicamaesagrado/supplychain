@@ -236,7 +236,7 @@ public class AssembleController extends BaseController {
             //update issued quantity on stock in to implement FIFO    
             double remainingRequired = assembleDetail.getUsedQuantity();
                 for (StockIn stockIn : stockInTransactions) {
-                    double availableQuantity = stockIn.getQuantity() - stockIn.getIssuedQuantity();
+                    double availableQuantity = stockIn.getQuantity() - stockIn.getIssuedQuantity() - stockIn.getReturnQuantity();
                     if (availableQuantity > 0) {
                         double usedQuantity = Math.min(remainingRequired, availableQuantity);
 

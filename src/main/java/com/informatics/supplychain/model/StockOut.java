@@ -37,6 +37,10 @@ public class StockOut {
 
     @JoinColumn
     @ManyToOne
+    private StockIn stockIn;
+
+    @JoinColumn
+    @ManyToOne
     private Item item;
 
     private Double quantity;
@@ -56,10 +60,9 @@ public class StockOut {
         transactionNo = dto.getTransactionNo();
         transactionDate = dto.getTransactionDate();
         remarks = dto.getRemarks();
-        if (dto.getItem() != null) {
-            item = new Item(dto.getItem());
+        if (dto.getStockIn() != null) {
+            stockIn = new StockIn(dto.getStockIn());
         }
         quantity = dto.getQuantity();
-        batchNo = dto.getBatchNo();
     }
 }

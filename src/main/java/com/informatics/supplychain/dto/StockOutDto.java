@@ -17,7 +17,7 @@ public class StockOutDto {
     @NotNull(message = "Transaction date cannot be null.")
     public LocalDate transactionDate;
     public String remarks;
-    public ItemDto item;
+    public StockInDto stockIn;
     public Double quantity;
     public String batchNo;
     public TransactionStatusEnum status;
@@ -33,8 +33,8 @@ public class StockOutDto {
             transactionNo = entity.getTransactionNo();
             transactionDate = entity.getTransactionDate();
             remarks = entity.getRemarks();
-            if (entity.getItem( )!= null) {
-                item = new ItemDto(entity.getItem());
+            if (entity.getStockIn() != null) {
+                stockIn = new StockInDto(entity.getStockIn());
             }
             quantity = entity.getQuantity();
             batchNo = entity.getBatchNo();

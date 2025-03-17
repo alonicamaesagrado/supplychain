@@ -6,6 +6,7 @@ import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.model.StockOut;
 import com.informatics.supplychain.service.InventoryService;
 import com.informatics.supplychain.service.ItemService;
+import com.informatics.supplychain.service.StockInService;
 import com.informatics.supplychain.service.StockOutService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,6 +39,9 @@ public class StockOutController extends BaseController {
     @Autowired
     InventoryService inventoryService;
 
+    @Autowired
+    StockInService stockInService;
+
     @GetMapping("v1/stockOut")
     ResponseEntity<?> getStockOut(@RequestParam String transactionNo) {
         var stockOut = stockOutService.findByTransactionNo(transactionNo);
@@ -50,11 +54,11 @@ public class StockOutController extends BaseController {
 
     @GetMapping("v1/stockOutList")
     ResponseEntity<List<StockOutDto>> getStockOutList(@RequestParam(required = false) TransactionStatusEnum status,
-                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<StockOut> stockOut;
         if (fromDate != null && toDate != null) {
-            stockOut = (status != null) ? stockOutService.findByStatusAndTransactionDateBetween(status, fromDate, toDate) :  stockOutService.findByTransactionDateBetween(fromDate, toDate);
+            stockOut = (status != null) ? stockOutService.findByStatusAndTransactionDateBetween(status, fromDate, toDate) : stockOutService.findByTransactionDateBetween(fromDate, toDate);
         } else {
             stockOut = (status != null) ? stockOutService.findByStatus(status) : stockOutService.findAll();
         }
@@ -63,9 +67,9 @@ public class StockOutController extends BaseController {
     }
 
     @GetMapping("v1/stockOutList/{itemId}")
-    public ResponseEntity<List<StockOut>> getStockOutByItemId(@PathVariable Integer itemId, @RequestParam(required = false) TransactionStatusEnum status, 
-                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+    public ResponseEntity<List<StockOut>> getStockOutByItemId(@PathVariable Integer itemId, @RequestParam(required = false) TransactionStatusEnum status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         List<StockOut> stockOuts = stockOutService.findByItemId(itemId);
         if (fromDate != null && toDate != null) {
             stockOuts = (status != null) ? stockOutService.findByItemAndStatusAndTransactionDateBetween(itemId, status, fromDate, toDate) : stockOutService.findByItemAndTransactionDateBetween(itemId, fromDate, toDate);
@@ -84,9 +88,9 @@ public class StockOutController extends BaseController {
             return ResponseEntity.status(404).body("Transaction date cannot be null.");
         }
 
-        //creation of stock in
+        //creation of stock out
         var stockOut = new StockOut();
-        var item = itemService.findByCode(stockOutDto.getItem().getCode());
+        var stockIn = stockInService.findByTransactionNo(stockOutDto.getStockIn().getTransactionNo());
 
         String yearMonth = stockOutDto.getTransactionDate().format(DateTimeFormatter.ofPattern("yyMM"));
         int series = stockOutService.getNextSeriesNumber(yearMonth);
@@ -95,15 +99,19 @@ public class StockOutController extends BaseController {
         stockOut.setTransactionNo(transactionNo);
         stockOut.setTransactionDate(stockOutDto.getTransactionDate());
         stockOut.setRemarks(stockOutDto.getRemarks());
-        if (item == null) {
-            return ResponseEntity.status(404).body("Item does not exist!");
+        if (stockIn == null) {
+            return ResponseEntity.status(404).body("Transaction does not exist!");
         }
-        stockOut.setItem(item);
+        stockOut.setStockIn(stockIn);
+        stockOut.setItem(stockIn.getItem());
         if (stockOutDto.getQuantity() <= 0) {
             return ResponseEntity.status(404).body("Quantity should be greater than zero.");
         }
+        if ((stockIn.getQuantity() - stockIn.getIssuedQuantity() - stockIn.getReturnQuantity()) < stockOutDto.getQuantity()) {
+            return ResponseEntity.status(404).body("Return quantity is greater than available.");
+        }
         stockOut.setQuantity(stockOutDto.getQuantity());
-        stockOut.setBatchNo(stockOutDto.getBatchNo());
+        stockOut.setBatchNo(stockIn.getBatchNo());
         stockOut.setCreatedDateTime(LocalDateTime.now());
         stockOut.setCreatedBy(usercode);
         stockOut = stockOutService.save(stockOut);
@@ -121,6 +129,14 @@ public class StockOutController extends BaseController {
         if (TransactionStatusEnum.COMPLETED.equals(existingTransaction.getStatus())) {
             return ResponseEntity.status(400).body("Cannot edit completed transactions!");
         }
+        if (stockOutDto.getQuantity() <= 0) {
+            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
+        }
+        
+        var stockIn = stockInService.findByTransactionNo(existingTransaction.getStockIn().getTransactionNo());
+        if ((stockIn.getQuantity() - stockIn.getIssuedQuantity() - stockIn.getReturnQuantity()) < stockOutDto.getQuantity()) {
+            return ResponseEntity.status(404).body("Return quantity is greater than available.");
+        }
 
         //code if status is completed then update inventory
         var item = itemService.findByCode(existingTransaction.getItem().getCode());
@@ -132,23 +148,22 @@ public class StockOutController extends BaseController {
                 inventory.setItem(item);
                 inventory.setItemType(item.getCategory());
                 inventory.setInQuantity(0.0);
-                inventory.setOutQuantity(stockOutDto.getQuantity() != null ? stockOutDto.getQuantity() : existingTransaction.getQuantity());
+                inventory.setOutQuantity(stockOutDto.getQuantity());
             } else {
                 inventory.setOutQuantity(inventory.getOutQuantity() + updatedQuantity);
             }
             inventoryService.save(inventory);
         }
-
         //update stock in details
         existingTransaction.setRemarks(stockOutDto.getRemarks());
-        if (stockOutDto.getQuantity() <= 0) {
-            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
-        }
         existingTransaction.setQuantity(stockOutDto.getQuantity() == null ? existingTransaction.getQuantity() : stockOutDto.getQuantity());
-        existingTransaction.setBatchNo(stockOutDto.getBatchNo());
         existingTransaction.setStatus(stockOutDto.getStatus());
+        
+        //update return qty on stock in
+        stockIn.setReturnQuantity(stockIn.getReturnQuantity() + stockOutDto.getQuantity());
+        stockInService.save(stockIn);
+        
         existingTransaction = stockOutService.save(existingTransaction);
-
         return ResponseEntity.ok(new StockOutDto(existingTransaction));
     }
 }

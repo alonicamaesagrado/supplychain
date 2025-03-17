@@ -125,6 +125,12 @@ public class StockInController extends BaseController {
         if (TransactionStatusEnum.COMPLETED.equals(existingTransaction.getStatus())) {
             return ResponseEntity.status(400).body("Cannot edit completed transactions!");
         }
+        if (stockInDto.getQuantity() <= 0) {
+            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
+        }
+        if (stockInDto.getExpiryDate() == null) {
+            return ResponseEntity.status(404).body("Value required for expiry date.");
+        }
 
         //code if status is completed then update inventory
         var item = itemService.findByCode(existingTransaction.getItem().getCode());
@@ -145,14 +151,8 @@ public class StockInController extends BaseController {
 
         //update stock in details
         existingTransaction.setRemarks(stockInDto.getRemarks());
-        if (stockInDto.getQuantity() <= 0) {
-            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
-        }
         existingTransaction.setQuantity(stockInDto.getQuantity() == null ? existingTransaction.getQuantity() : stockInDto.getQuantity());
         existingTransaction.setBatchNo(stockInDto.getBatchNo());
-        if (stockInDto.getExpiryDate() == null) {
-            return ResponseEntity.status(404).body("Value required for expiry date.");
-        }
         existingTransaction.setExpiryDate(stockInDto.getExpiryDate());
         existingTransaction.setStatus(stockInDto.getStatus());
         existingTransaction = stockInService.save(existingTransaction);

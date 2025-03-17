@@ -20,6 +20,7 @@ public class StockInDto {
     public ItemDto item;
     public Double quantity;
     public Double issuedQuantity;
+    public Double returnQuantity;
     public String batchNo;
     public LocalDate expiryDate;
     public TransactionStatusEnum status;
@@ -40,6 +41,7 @@ public class StockInDto {
             }
             quantity = entity.getQuantity();
             issuedQuantity = entity.getIssuedQuantity();
+            returnQuantity = entity.getReturnQuantity();
             batchNo = entity.getBatchNo();
             expiryDate = entity.getExpiryDate();
             status = entity.getStatus();

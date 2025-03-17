@@ -41,6 +41,7 @@ public class StockIn {
 
     private Double quantity;
     private Double issuedQuantity;
+    private Double returnQuantity;
     private String batchNo;
     public LocalDate expiryDate;
 
@@ -51,6 +52,7 @@ public class StockIn {
 
     public StockIn() {
         issuedQuantity = 0.0;
+        returnQuantity = 0.0;
         status = TransactionStatusEnum.DRAFT;
         createdDateTime = LocalDateTime.now();
     }
@@ -64,6 +66,7 @@ public class StockIn {
         }
         quantity = dto.getQuantity();
         issuedQuantity = dto.getIssuedQuantity();
+        returnQuantity = dto.getReturnQuantity();
         batchNo = dto.getBatchNo();
         expiryDate = dto.getExpiryDate();
     }

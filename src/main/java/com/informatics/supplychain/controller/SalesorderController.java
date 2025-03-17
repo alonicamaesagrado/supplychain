@@ -135,9 +135,6 @@ public class SalesorderController extends BaseController {
                 inventory.setInQuantity(0.0);
             }
             double availableStock = inventory.getInQuantity() - inventory.getOutQuantity();
-            if (detailDto.getOrderQuantity() > (inventory.getInQuantity() - inventory.getOutQuantity())) {
-                return ResponseEntity.status(404).body("Cannot deliver more than available quantity.");
-            }
 
             //creation of salesorder_detail
             var detail = new SalesorderDetail();

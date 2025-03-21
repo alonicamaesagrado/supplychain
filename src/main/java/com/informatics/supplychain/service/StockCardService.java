@@ -49,15 +49,16 @@ public class StockCardService {
         double runningBalance = 0;
 
         //rawmats in transactions
-        for (StockIn stock : stockIns.stream().filter(s -> TransactionStatusEnum.COMPLETED.equals(s.getStatus())).collect(Collectors.toList())) {
-            runningBalance += stock.getQuantity();
+        for (StockIn stockIn : stockIns.stream().filter(s -> TransactionStatusEnum.COMPLETED.equals(s.getStatus())).collect(Collectors.toList())) {
+            runningBalance += stockIn.getQuantity();
             stockCardList.add(new StockCardDto(
-                    stock.getItem().getId(),
-                    stock.getTransactionDate(),
-                    stock.getTransactionNo(),
-                    stock.getQuantity(), //in
+                    stockIn.getItem().getId(),
+                    stockIn.getTransactionDate(),
+                    stockIn.getTransactionNo(),
+                    stockIn.getQuantity(), //in
                     0.0, //out
-                    runningBalance
+                    runningBalance,
+                    stockIn.getCreatedDateTime()
             ));
         }
 
@@ -70,7 +71,8 @@ public class StockCardService {
                     detail.getAssemble().getTransactionNo(),
                     0.0, //in
                     detail.getUsedQuantity(), //out
-                    runningBalance
+                    runningBalance,
+                    detail.getAssemble().getCreatedDateTime()
             ));
         }
         
@@ -83,7 +85,8 @@ public class StockCardService {
                     stockOut.getTransactionNo(),
                     0.0, //in
                     stockOut.getQuantity(), //out
-                    runningBalance
+                    runningBalance,
+                    stockOut.getCreatedDateTime()
             ));
         }
         
@@ -96,7 +99,8 @@ public class StockCardService {
                     assemble.getTransactionNo(),
                     assemble.getAssemble_quantity(), //in
                     0.0, //out
-                    runningBalance
+                    runningBalance,
+                    assemble.getCreatedDateTime()
             ));
         }
         
@@ -109,11 +113,12 @@ public class StockCardService {
                     salesorderdetail.getSalesorder().getSalesorderNo(),
                     0.0, //in
                     salesorderdetail.getOrderQuantity(), //out
-                    runningBalance
+                    runningBalance,
+                    salesorderdetail.getSalesorder().getCreatedDateTime()
             ));
         }
         
-        stockCardList.sort(Comparator.comparing(StockCardDto::getDate));
+        stockCardList.sort(Comparator.comparing(StockCardDto::getDate).thenComparing(StockCardDto::getCreatedDateTime));
         return stockCardList;
     }
 

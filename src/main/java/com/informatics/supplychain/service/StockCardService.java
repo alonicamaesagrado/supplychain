@@ -100,7 +100,7 @@ public class StockCardService {
         }
 
         //finish product out transactions
-        for (SalesorderDetail salesorderdetail : salesorderDetails.stream().filter(d -> TransactionStatusEnum.COMPLETED.equals(d.getSalesorder().getOrderDate())).collect(Collectors.toList())) {
+        for (SalesorderDetail salesorderdetail : salesorderDetails.stream().filter(d -> TransactionStatusEnum.COMPLETED.equals(d.getSalesorder().getStatus())).collect(Collectors.toList())) {
             stockCardList.add(new StockCardDto(
                     salesorderdetail.getId(),
                     salesorderdetail.getSalesorder().getOrderDate(),

@@ -153,12 +153,12 @@ public class SalesorderController extends BaseController {
         }
         salesorder = salesorderService.save(salesorder);
 
-        //update on inventory balance
-        for (SalesorderDetail detail : salesorder.getDetails()) {
-            var inventory = inventoryService.findByItemIdAndItemType(detail.getItem().getId(), detail.getItem().getCategory());
-            inventory.setOutQuantity(inventory.getOutQuantity() + detail.getOrderQuantity());
-            inventoryService.save(inventory);
-        }
+//        //update on inventory balance
+//        for (SalesorderDetail detail : salesorder.getDetails()) {
+//            var inventory = inventoryService.findByItemIdAndItemType(detail.getItem().getId(), detail.getItem().getCategory());
+//            inventory.setOutQuantity(inventory.getOutQuantity() + detail.getOrderQuantity());
+//            inventoryService.save(inventory);
+//        }
         return ResponseEntity.ok(new SalesorderDto(salesorder));
     }
 
@@ -192,8 +192,6 @@ public class SalesorderController extends BaseController {
             var detail = salesorder.getDetails().stream().filter(d -> d.getId().equals(detailDto.getId())).findFirst().orElse(null);
             var item = itemService.findByCode(detailDto.getItem().getCode());
             var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
-            double previousOrderQuantity = detail.getOrderQuantity();
-            double quantityDifference = detailDto.getOrderQuantity() - previousOrderQuantity;
 
             //validations
             if (detail == null) {
@@ -205,7 +203,7 @@ public class SalesorderController extends BaseController {
             if (inventory == null) {
                 return ResponseEntity.status(404).body("Inventory not found for item: " + item.getCode());
             }
-            if ((inventory.getInQuantity() - inventory.getOutQuantity()) < quantityDifference) {
+            if ((inventory.getInQuantity() - inventory.getOutQuantity()) < detailDto.getOrderQuantity()) {
                 return ResponseEntity.status(404).body("Cannot deliver more than available quantity.");
             }
 
@@ -218,7 +216,7 @@ public class SalesorderController extends BaseController {
                 detail.setItemPrice(detailDto.getItemPrice()); 
             }
             detail.setAmount(detail.getOrderQuantity() * detail.getItemPrice()); 
-            inventory.setOutQuantity(inventory.getOutQuantity() + quantityDifference);
+            inventory.setOutQuantity(inventory.getOutQuantity() + detailDto.getOrderQuantity());
             inventoryService.save(inventory);
         }
         salesorder = salesorderService.save(salesorder);

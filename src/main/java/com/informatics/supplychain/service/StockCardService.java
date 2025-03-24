@@ -92,7 +92,7 @@ public class StockCardService {
                     assemble.getFinishProduct().getId(),
                     assemble.getTransactionDate(),
                     assemble.getTransactionNo(),
-                    assemble.getAssemble_quantity(), //in
+                    assemble.getAssembleQuantity(), //in
                     0.0, //out
                     0.0, //running balace
                     assemble.getCreatedDateTime()

@@ -19,11 +19,13 @@ public class AssembleDto {
     public LocalDate transactionDate;
     public String remarks;
     public ItemDto finishProduct;
-    public Double assemble_quantity;
+    public Double assembleQuantity;
+    public Double issuedQuantity;
+    public Double returnQuantity;
     public String batchNo;
+    public LocalDate expiryDate;
     public TransactionStatusEnum status;
-    private LocalDateTime createdDateTime;
-    private List<AssembleDetailDto> details;
+    public LocalDateTime createdDateTime;
 
     public AssembleDto() {
 
@@ -37,8 +39,11 @@ public class AssembleDto {
             if (entity.getFinishProduct()!= null) {
                 finishProduct = new ItemDto(entity.getFinishProduct());
             }
-            assemble_quantity = entity.getAssemble_quantity();
+            assembleQuantity = entity.getAssembleQuantity();
+            issuedQuantity = entity.getIssuedQuantity();
+            returnQuantity = entity.getReturnQuantity();
             batchNo = entity.getBatchNo();
+            expiryDate = entity.getExpiryDate();
             status = entity.getStatus();
             createdDateTime = entity.getCreatedDateTime();
         }

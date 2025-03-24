@@ -95,24 +95,39 @@ public class AssembleController extends BaseController {
         String transactionNo = "AS" + yearMonth + String.format("%04d", series);
         assembleDto.setTransactionNo(transactionNo);
 
-        //validations
-        Item finishProduct = itemRepository.findById(assembleDto.getFinishProduct().getId()).orElseThrow(() -> new RuntimeException("Finish Product not found"));
+        //creation of assemble_summary
+        var finishProduct = itemRepository.findById(assembleDto.getFinishProduct().getId());
         var assemble = new Assemble(assembleDto);
+        assemble.setTransactionDate(assembleDto.getTransactionDate());
+        assemble.setRemarks(assembleDto.getRemarks());
+        assemble.setAssembleQuantity(assembleDto.getAssembleQuantity());
+        assemble.setIssuedQuantity(0.0);
+        assemble.setReturnQuantity(0.0);
+        assemble.setBatchNo(assembleDto.getBatchNo());
+        if (assembleDto.getExpiryDate() == null) {
+            return ResponseEntity.status(404).body("Value required for expiry date.");
+        }
+        assemble.setExpiryDate(assembleDto.getExpiryDate());
         assemble.setStatus(TransactionStatusEnum.DRAFT);
         assemble.setCreatedDateTime(LocalDateTime.now());
         assemble.setCreatedBy(usercode);
+        
+        //validations
         List<ItemComponents> itemComponents = itemComponentsRepository.findByFinishProductId(assembleDto.getFinishProduct().getId());
+        if (finishProduct == null) {
+            return ResponseEntity.status(404).body("Item does not exist!");
+        }
         if (itemComponents.isEmpty()) {
             return ResponseEntity.status(404).body("No raw materials found for the provided finish product.");
         }
-        if (assembleDto.getAssemble_quantity() <= 0) {
+        if (assembleDto.getAssembleQuantity() <= 0) {
             return ResponseEntity.status(404).body("Quantity should be greater than zero.");
         }
 
         //checking of raw mats stocks
         List<String> insufficientStocks = new ArrayList<>();
         for (ItemComponents component : itemComponents) {
-            double requiredQuantity = assembleDto.getAssemble_quantity() * component.getQuantity();
+            double requiredQuantity = assembleDto.getAssembleQuantity() * component.getQuantity();
             Inventory inventory = inventoryService.findByItemId(component.getRawMaterial().getId()).stream().findFirst().orElse(null);
             double balance = (inventory != null) ? (inventory.getInQuantity() - inventory.getOutQuantity()) : 0.0;
 
@@ -125,12 +140,12 @@ public class AssembleController extends BaseController {
             return ResponseEntity.status(400).body("Insufficient stock for raw materials: \n" + String.join(", \n", insufficientStocks));
         }
 
-        //creation of assemble
+        //creation of assemble_detail
         List<AssembleDetail> assembleDetails = new ArrayList<>();
         for (ItemComponents component : itemComponents) {
             AssembleDetail assembleDetail = new AssembleDetail();
             assembleDetail.setRawMaterial(component.getRawMaterial());
-            double usedQuantity = assembleDto.getAssemble_quantity() * component.getQuantity();
+            double usedQuantity = assembleDto.getAssembleQuantity() * component.getQuantity();
             assembleDetail.setUsedQuantity(usedQuantity);
             assembleDetail.setAssemble(assemble);
             assembleDetails.add(assembleDetail);
@@ -150,7 +165,6 @@ public class AssembleController extends BaseController {
             detailDto.setUsedQuantity(assembleDetail.getUsedQuantity());
             detailDtos.add(detailDto);
         }
-        responseDto.setDetails(detailDtos);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -165,15 +179,15 @@ public class AssembleController extends BaseController {
         if (TransactionStatusEnum.COMPLETED.equals(existingTransaction.getStatus())) {
             return ResponseEntity.status(400).body("Cannot edit completed transactions!");
         }
-        if (assembleDto.getAssemble_quantity() <= 0) {
+        if (assembleDto.getAssembleQuantity() <= 0) {
             return ResponseEntity.status(404).body("Quantity should be greater than zero.");
         }
 
         List<AssembleDetail> assembleDetails = assembleDetailService.findByAssemble(existingTransaction);
         List<String> insufficientMaterials = new ArrayList<>();
 
-        double oldAssembleQuantity = existingTransaction.getAssemble_quantity();
-        double newAssembleQuantity = assembleDto.getAssemble_quantity();
+        double oldAssembleQuantity = existingTransaction.getAssembleQuantity();
+        double newAssembleQuantity = assembleDto.getAssembleQuantity();
         double scaleFactor = (oldAssembleQuantity > 0) ? newAssembleQuantity / oldAssembleQuantity : 1;
 
         // Updating usedQuantity in assembleDetails
@@ -202,13 +216,13 @@ public class AssembleController extends BaseController {
             Inventory finishProductInventory = inventoryService.findByItemId(existingTransaction.getFinishProduct().getId()).stream().findFirst().orElse(null);
 
             if (finishProductInventory != null) {
-                finishProductInventory.setInQuantity(finishProductInventory.getInQuantity() + assembleDto.getAssemble_quantity());
+                finishProductInventory.setInQuantity(finishProductInventory.getInQuantity() + assembleDto.getAssembleQuantity());
                 inventoryService.save(finishProductInventory);
             } else {
                 Inventory newFinishProductInventory = new Inventory();
                 newFinishProductInventory.setItem(existingTransaction.getFinishProduct());
                 newFinishProductInventory.setItemType(existingTransaction.getFinishProduct().getCategory());
-                newFinishProductInventory.setInQuantity(assembleDto.getAssemble_quantity());
+                newFinishProductInventory.setInQuantity(assembleDto.getAssembleQuantity());
                 newFinishProductInventory.setOutQuantity(0.0);
                 inventoryService.save(newFinishProductInventory);
             }
@@ -256,7 +270,7 @@ public class AssembleController extends BaseController {
         existingTransaction.setRemarks(assembleDto.getRemarks());
         existingTransaction.setBatchNo(assembleDto.getBatchNo());
         existingTransaction.setStatus(assembleDto.getStatus());
-        existingTransaction.setAssemble_quantity(newAssembleQuantity);
+        existingTransaction.setAssembleQuantity(newAssembleQuantity);
         assembleService.save(existingTransaction);
 
         //response
@@ -269,7 +283,6 @@ public class AssembleController extends BaseController {
             detailDto.setUsedQuantity(assembleDetail.getUsedQuantity());
             detailDtos.add(detailDto);
         }
-        responseDto.setDetails(detailDtos);
 
         return ResponseEntity.ok(responseDto);
     }

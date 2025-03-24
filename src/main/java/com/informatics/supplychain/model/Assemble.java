@@ -39,8 +39,11 @@ public class Assemble {
     @ManyToOne
     private Item finishProduct;
 
-    private Double assemble_quantity;
+    private Double assembleQuantity;
+    private Double issuedQuantity;
+    private Double returnQuantity;
     private String batchNo;
+    private LocalDate expiryDate;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatusEnum status;
@@ -48,6 +51,8 @@ public class Assemble {
     private LocalDateTime createdDateTime;
 
     public Assemble() {
+        issuedQuantity = 0.0;
+        returnQuantity = 0.0;
         status = TransactionStatusEnum.DRAFT;
         createdDateTime = LocalDateTime.now();
     }
@@ -59,7 +64,10 @@ public class Assemble {
         if (dto.getFinishProduct()!= null) {
             finishProduct = new Item(dto.getFinishProduct());
         }
-        assemble_quantity = dto.getAssemble_quantity();
+        assembleQuantity = dto.getAssembleQuantity();
+        issuedQuantity = dto.getIssuedQuantity();
+        returnQuantity = dto.getReturnQuantity();
         batchNo = dto.getBatchNo();
+        expiryDate = dto.getExpiryDate();
     }
 }

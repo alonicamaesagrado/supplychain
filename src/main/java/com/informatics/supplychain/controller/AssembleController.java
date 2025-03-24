@@ -190,7 +190,7 @@ public class AssembleController extends BaseController {
         double newAssembleQuantity = assembleDto.getAssembleQuantity();
         double scaleFactor = (oldAssembleQuantity > 0) ? newAssembleQuantity / oldAssembleQuantity : 1;
 
-        // Updating usedQuantity in assembleDetails
+        //update usedQuantity in assembleDetails
         for (AssembleDetail assembleDetail : assembleDetails) {
             double newUsedQuantity = assembleDetail.getUsedQuantity() * scaleFactor; // i need to update is based on updated assembled qty * item components 
             assembleDetail.setUsedQuantity(newUsedQuantity);
@@ -210,9 +210,9 @@ public class AssembleController extends BaseController {
             return ResponseEntity.status(400).body("Insufficient stock for raw materials: \n" + String.join(",\n", insufficientMaterials));
         }
 
-        // Update inventory once status is COMPLETED
+        //update inventory once status is COMPLETED
         if (TransactionStatusEnum.COMPLETED.equals(assembleDto.getStatus())) {
-            // Update finished product inventory
+            //add finished product inventory
             Inventory finishProductInventory = inventoryService.findByItemId(existingTransaction.getFinishProduct().getId()).stream().findFirst().orElse(null);
 
             if (finishProductInventory != null) {
@@ -231,10 +231,7 @@ public class AssembleController extends BaseController {
             for (AssembleDetail assembleDetail : assembleDetails) {
                 Item rawMaterial = assembleDetail.getRawMaterial();
                 List<Inventory> existingInventories = inventoryService.findByItemId(rawMaterial.getId());
-                List<StockIn> stockInTransactions = stockInService.findByItemId(rawMaterial.getId())
-                        .stream()
-                        .sorted(Comparator.comparing(StockIn::getExpiryDate))
-                        .collect(Collectors.toList());
+                List<StockIn> stockInTransactions = stockInService.findByItemId(rawMaterial.getId()).stream().sorted(Comparator.comparing(StockIn::getExpiryDate)).collect(Collectors.toList());
 
                 if (!existingInventories.isEmpty()) {
                     Inventory existingInventory = existingInventories.get(0);

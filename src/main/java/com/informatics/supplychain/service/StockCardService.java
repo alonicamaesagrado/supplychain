@@ -73,7 +73,7 @@ public class StockCardService {
             ));
         }
 
-        //rawmats out transactions
+        //rawmats amd finish product out transactions
         for (StockOut stockOut : stockOuts.stream().filter(s -> TransactionStatusEnum.COMPLETED.equals(s.getStatus())).collect(Collectors.toList())) {
             stockCardList.add(new StockCardDto(
                     stockOut.getItem().getId(),

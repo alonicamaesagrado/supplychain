@@ -6,9 +6,11 @@ import com.informatics.supplychain.dto.SalesorderDto;
 import com.informatics.supplychain.dto.SalesorderForArimaDto;
 import com.informatics.supplychain.enums.StatusEnum;
 import com.informatics.supplychain.enums.TransactionStatusEnum;
+import com.informatics.supplychain.model.Assemble;
 import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.model.Salesorder;
 import com.informatics.supplychain.model.SalesorderDetail;
+import com.informatics.supplychain.service.AssembleService;
 import com.informatics.supplychain.service.CustomerService;
 import com.informatics.supplychain.service.InventoryService;
 import com.informatics.supplychain.service.ItemService;
@@ -17,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +42,9 @@ public class SalesorderController extends BaseController {
 
     @Autowired
     CustomerService customerService;
+    
+    @Autowired
+    AssembleService assembleService;
 
     @GetMapping("v1/salesorder")
     ResponseEntity<?> getSalesorder(@RequestParam String salesorderNo) {
@@ -152,13 +158,6 @@ public class SalesorderController extends BaseController {
             salesorder.getDetails().add(detail);
         }
         salesorder = salesorderService.save(salesorder);
-
-//        //update on inventory balance
-//        for (SalesorderDetail detail : salesorder.getDetails()) {
-//            var inventory = inventoryService.findByItemIdAndItemType(detail.getItem().getId(), detail.getItem().getCategory());
-//            inventory.setOutQuantity(inventory.getOutQuantity() + detail.getOrderQuantity());
-//            inventoryService.save(inventory);
-//        }
         return ResponseEntity.ok(new SalesorderDto(salesorder));
     }
 
@@ -169,29 +168,30 @@ public class SalesorderController extends BaseController {
             return ResponseEntity.status(404).body("Sales order not found.");
         }
 
-        //salesorder summary details to be update
+        //update salesorder summary
         if (salesorderDto.getOrderDate() != null) {
-            salesorder.setOrderDate(salesorderDto.getOrderDate()); //date
+            salesorder.setOrderDate(salesorderDto.getOrderDate());
         }
         if (salesorderDto.getRemarks() != null) {
-            salesorder.setRemarks(salesorderDto.getRemarks()); //remarks
+            salesorder.setRemarks(salesorderDto.getRemarks());
         }
         if (salesorderDto.getCustomer() != null) {
             var customer = customerService.findByIdAndStatus(salesorderDto.getCustomer().getId(), StatusEnum.ACTIVE);
             if (customer == null) {
                 return ResponseEntity.status(404).body("Customer not found or inactive.");
             }
-            salesorder.setCustomer(customer); //customer
+            salesorder.setCustomer(customer);
         }
         if (salesorderDto.getStatus() != null) {
-            salesorder.setStatus(salesorderDto.getStatus()); //status
+            salesorder.setStatus(salesorderDto.getStatus());
         }
 
-        //salesorder details to be update
+        //update salesorder_details
         for (SalesorderDetailDto detailDto : salesorderDto.getDetails()) {
             var detail = salesorder.getDetails().stream().filter(d -> d.getId().equals(detailDto.getId())).findFirst().orElse(null);
             var item = itemService.findByCode(detailDto.getItem().getCode());
             var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
+            List<Assemble> assembleTransactions = assembleService.findByFinishProductId(item.getId()).stream().sorted(Comparator.comparing(Assemble::getExpiryDate)).collect(Collectors.toList());
 
             //validations
             if (detail == null) {
@@ -213,11 +213,28 @@ public class SalesorderController extends BaseController {
             }
             detail.setOrderQuantity(detailDto.getOrderQuantity());
             if (detailDto.getItemPrice() != null) {
-                detail.setItemPrice(detailDto.getItemPrice()); 
+                detail.setItemPrice(detailDto.getItemPrice());
             }
-            detail.setAmount(detail.getOrderQuantity() * detail.getItemPrice()); 
+            detail.setAmount(detail.getOrderQuantity() * detail.getItemPrice());
             inventory.setOutQuantity(inventory.getOutQuantity() + detailDto.getOrderQuantity());
             inventoryService.save(inventory);
+
+            //update issued quantity on assemble to implement FIFO    
+            double remainingRequired = detailDto.getOrderQuantity();
+            for (Assemble assemble : assembleTransactions) {
+                double availableQuantity = assemble.getAssembleQuantity() - assemble.getIssuedQuantity() - assemble.getReturnQuantity();
+                if (availableQuantity > 0) {
+                    double usedQuantity = Math.min(remainingRequired, availableQuantity);
+
+                    assemble.setIssuedQuantity(assemble.getIssuedQuantity() + usedQuantity);
+                    assembleService.save(assemble);
+
+                    remainingRequired -= usedQuantity;
+                    if (remainingRequired <= 0) {
+                        break;
+                    }
+                }
+            }
         }
         salesorder = salesorderService.save(salesorder);
         return ResponseEntity.ok(new SalesorderDto(salesorder));

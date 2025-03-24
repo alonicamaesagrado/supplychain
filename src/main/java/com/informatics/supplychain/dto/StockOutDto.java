@@ -18,8 +18,10 @@ public class StockOutDto {
     public LocalDate transactionDate;
     public String remarks;
     public StockInDto stockIn;
+    public AssembleDto assemble;
     public Double quantity;
     public String batchNo;
+    public String transactionType;
     public TransactionStatusEnum status;
     private LocalDateTime createdDateTime;
     private String createdBy;
@@ -36,8 +38,12 @@ public class StockOutDto {
             if (entity.getStockIn() != null) {
                 stockIn = new StockInDto(entity.getStockIn());
             }
+            if (entity.getAssemble() != null) {
+                assemble = new AssembleDto(entity.getAssemble());
+            }
             quantity = entity.getQuantity();
             batchNo = entity.getBatchNo();
+            transactionType = entity.getTransactionType();
             status = entity.getStatus();
             createdDateTime = entity.getCreatedDateTime();
             createdBy = entity.getCreatedBy();

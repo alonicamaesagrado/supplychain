@@ -58,8 +58,18 @@ public class StockOutService {
         return stockOutRepository.save(stockOut);
     }
 
-    public int getNextSeriesNumber(String yearMonth) {
-        String lastTransactionNo = stockOutRepository.findLastTransactionNoByYearMonth(yearMonth);
+    public int getNextSeriesNumberForRawMats(String yearMonth) {
+        String lastTransactionNo = stockOutRepository.findLastTransactionNoForRawMatsByYearMonth(yearMonth);
+        if (lastTransactionNo == null || lastTransactionNo.isEmpty()) {
+            return 1;
+        }
+        String seriesPart = lastTransactionNo.substring(lastTransactionNo.length() - 4);
+        int nextSeries = Integer.parseInt(seriesPart) + 1;
+        return nextSeries;
+    }
+    
+    public int getNextSeriesNumberForProduct(String yearMonth) {
+        String lastTransactionNo = stockOutRepository.findLastTransactionNoForProductByYearMonth(yearMonth);
         if (lastTransactionNo == null || lastTransactionNo.isEmpty()) {
             return 1;
         }

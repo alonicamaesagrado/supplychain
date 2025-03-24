@@ -4,6 +4,7 @@ import com.informatics.supplychain.dto.StockOutDto;
 import com.informatics.supplychain.enums.TransactionStatusEnum;
 import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.model.StockOut;
+import com.informatics.supplychain.service.AssembleService;
 import com.informatics.supplychain.service.InventoryService;
 import com.informatics.supplychain.service.ItemService;
 import com.informatics.supplychain.service.StockInService;
@@ -42,6 +43,9 @@ public class StockOutController extends BaseController {
     @Autowired
     StockInService stockInService;
 
+    @Autowired
+    AssembleService assembleService;
+
     @GetMapping("v1/stockOut")
     ResponseEntity<?> getStockOut(@RequestParam String transactionNo) {
         var stockOut = stockOutService.findByTransactionNo(transactionNo);
@@ -79,8 +83,8 @@ public class StockOutController extends BaseController {
         return ResponseEntity.ok(stockOuts);
     }
 
-    @PostMapping("v1/stockOut")
-    ResponseEntity<?> saveStockOut(@RequestHeader String usercode, @RequestHeader String token, @RequestBody StockOutDto stockOutDto) throws Exception {
+    @PostMapping("v1/stockout-rawmats")
+    ResponseEntity<?> saveRawMatsStockOut(@RequestHeader String usercode, @RequestHeader String token, @RequestBody StockOutDto stockOutDto) throws Exception {
         if (!verify(usercode, token)) {
             return ResponseEntity.badRequest().build();
         }
@@ -93,14 +97,14 @@ public class StockOutController extends BaseController {
         var stockIn = stockInService.findByTransactionNo(stockOutDto.getStockIn().getTransactionNo());
 
         String yearMonth = stockOutDto.getTransactionDate().format(DateTimeFormatter.ofPattern("yyMM"));
-        int series = stockOutService.getNextSeriesNumber(yearMonth);
-        String transactionNo = "STO" + yearMonth + String.format("%04d", series);
+        int series = stockOutService.getNextSeriesNumberForRawMats(yearMonth);
+        String transactionNo = "STO-RM-" + yearMonth + String.format("%04d", series);
 
         stockOut.setTransactionNo(transactionNo);
         stockOut.setTransactionDate(stockOutDto.getTransactionDate());
         stockOut.setRemarks(stockOutDto.getRemarks());
         if (stockIn == null) {
-            return ResponseEntity.status(404).body("Transaction does not exist!");
+            return ResponseEntity.status(404).body("Stock-In transaction does not exist!");
         }
         stockOut.setStockIn(stockIn);
         stockOut.setItem(stockIn.getItem());
@@ -112,6 +116,47 @@ public class StockOutController extends BaseController {
         }
         stockOut.setQuantity(stockOutDto.getQuantity());
         stockOut.setBatchNo(stockIn.getBatchNo());
+        stockOut.setTransactionType("RawMats");
+        stockOut.setCreatedDateTime(LocalDateTime.now());
+        stockOut.setCreatedBy(usercode);
+        stockOut = stockOutService.save(stockOut);
+        return ResponseEntity.ok(new StockOutDto(stockOut));
+    }
+
+    @PostMapping("v1/stockout-product")
+    ResponseEntity<?> saveProductStockOut(@RequestHeader String usercode, @RequestHeader String token, @RequestBody StockOutDto stockOutDto) throws Exception {
+        if (!verify(usercode, token)) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (stockOutDto.getTransactionDate() == null) {
+            return ResponseEntity.status(404).body("Transaction date cannot be null.");
+        }
+
+        //creation of stock out
+        var stockOut = new StockOut();
+        var assemble = assembleService.findByTransactionNo(stockOutDto.getAssemble().getTransactionNo());
+
+        String yearMonth = stockOutDto.getTransactionDate().format(DateTimeFormatter.ofPattern("yyMM"));
+        int series = stockOutService.getNextSeriesNumberForRawMats(yearMonth);
+        String transactionNo = "STO-FP-" + yearMonth + String.format("%04d", series);
+
+        stockOut.setTransactionNo(transactionNo);
+        stockOut.setTransactionDate(stockOutDto.getTransactionDate());
+        stockOut.setRemarks(stockOutDto.getRemarks());
+        if (assemble == null) {
+            return ResponseEntity.status(404).body("Assemble transaction does not exist!");
+        }
+        stockOut.setAssemble(assemble);
+        stockOut.setItem(assemble.getFinishProduct());
+        if (stockOutDto.getQuantity() <= 0) {
+            return ResponseEntity.status(404).body("Quantity should be greater than zero.");
+        }
+        if ((assemble.getAssembleQuantity() - assemble.getIssuedQuantity() - assemble.getReturnQuantity()) < stockOutDto.getQuantity()) {
+            return ResponseEntity.status(404).body("Return quantity is greater than available.");
+        }
+        stockOut.setQuantity(stockOutDto.getQuantity());
+        stockOut.setBatchNo(assemble.getBatchNo());
+        stockOut.setTransactionType("Product");
         stockOut.setCreatedDateTime(LocalDateTime.now());
         stockOut.setCreatedBy(usercode);
         stockOut = stockOutService.save(stockOut);
@@ -132,10 +177,18 @@ public class StockOutController extends BaseController {
         if (stockOutDto.getQuantity() <= 0) {
             return ResponseEntity.status(404).body("Quantity should be greater than zero.");
         }
-        
-        var stockIn = stockInService.findByTransactionNo(existingTransaction.getStockIn().getTransactionNo());
-        if ((stockIn.getQuantity() - stockIn.getIssuedQuantity() - stockIn.getReturnQuantity()) < stockOutDto.getQuantity()) {
-            return ResponseEntity.status(404).body("Return quantity is greater than available.");
+
+        var stockIn = existingTransaction.getStockIn() != null ? stockInService.findByTransactionNo(existingTransaction.getStockIn().getTransactionNo()) : null;
+        var assemble = existingTransaction.getAssemble() != null ? assembleService.findByTransactionNo(existingTransaction.getAssemble().getTransactionNo()) : null;
+
+        if ("RawMats".equals(existingTransaction.getTransactionType())) {
+            if ((stockIn.getQuantity() - stockIn.getIssuedQuantity() - stockIn.getReturnQuantity()) < stockOutDto.getQuantity()) {
+                return ResponseEntity.status(404).body("Return quantity is greater than available.");
+            }
+        } else if ("Product".equals(existingTransaction.getTransactionType())) {
+            if ((assemble.getAssembleQuantity() - assemble.getIssuedQuantity() - assemble.getReturnQuantity()) < stockOutDto.getQuantity()) {
+                return ResponseEntity.status(404).body("Return quantity is greater than available.");
+            }
         }
 
         //code if status is completed then update inventory
@@ -154,15 +207,22 @@ public class StockOutController extends BaseController {
             }
             inventoryService.save(inventory);
         }
-        //update stock in details
+        //update stock out details
         existingTransaction.setRemarks(stockOutDto.getRemarks());
         existingTransaction.setQuantity(stockOutDto.getQuantity() == null ? existingTransaction.getQuantity() : stockOutDto.getQuantity());
         existingTransaction.setStatus(stockOutDto.getStatus());
-        
+
         //update return qty on stock in
-        stockIn.setReturnQuantity(stockIn.getReturnQuantity() + stockOutDto.getQuantity());
-        stockInService.save(stockIn);
-        
+        if (stockIn != null) {
+            stockIn.setReturnQuantity(stockIn.getReturnQuantity() + stockOutDto.getQuantity());
+            stockInService.save(stockIn);
+        }
+        //update return qty on assemble
+        if (assemble != null) {
+            assemble.setReturnQuantity(assemble.getReturnQuantity() + stockOutDto.getQuantity());
+            assembleService.save(assemble);
+        }
+
         existingTransaction = stockOutService.save(existingTransaction);
         return ResponseEntity.ok(new StockOutDto(existingTransaction));
     }

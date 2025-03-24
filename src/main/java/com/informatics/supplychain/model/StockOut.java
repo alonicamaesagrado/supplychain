@@ -38,6 +38,10 @@ public class StockOut {
     @JoinColumn
     @ManyToOne
     private StockIn stockIn;
+    
+    @JoinColumn
+    @ManyToOne
+    private Assemble assemble;
 
     @JoinColumn
     @ManyToOne
@@ -45,7 +49,8 @@ public class StockOut {
 
     private Double quantity;
     private String batchNo;
-
+    
+    private String transactionType;
     @Enumerated(EnumType.STRING)
     private TransactionStatusEnum status;
     private String createdBy;
@@ -63,6 +68,10 @@ public class StockOut {
         if (dto.getStockIn() != null) {
             stockIn = new StockIn(dto.getStockIn());
         }
+        if (dto.getAssemble() != null) {
+            assemble = new Assemble(dto.getAssemble());
+        }
         quantity = dto.getQuantity();
+        transactionType = dto.getTransactionType();
     }
 }

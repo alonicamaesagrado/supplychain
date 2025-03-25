@@ -137,7 +137,7 @@ public class StockOutController extends BaseController {
         var assemble = assembleService.findByTransactionNo(stockOutDto.getAssemble().getTransactionNo());
 
         String yearMonth = stockOutDto.getTransactionDate().format(DateTimeFormatter.ofPattern("yyMM"));
-        int series = stockOutService.getNextSeriesNumberForRawMats(yearMonth);
+        int series = stockOutService.getNextSeriesNumberForProduct(yearMonth);
         String transactionNo = "STO-FP-" + yearMonth + String.format("%04d", series);
 
         stockOut.setTransactionNo(transactionNo);

@@ -10,6 +10,7 @@ import com.informatics.supplychain.model.Assemble;
 import com.informatics.supplychain.model.Inventory;
 import com.informatics.supplychain.model.Salesorder;
 import com.informatics.supplychain.model.SalesorderDetail;
+import com.informatics.supplychain.repository.SalesorderDetailRepository;
 import com.informatics.supplychain.service.AssembleService;
 import com.informatics.supplychain.service.CustomerService;
 import com.informatics.supplychain.service.InventoryService;
@@ -20,7 +21,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -42,9 +45,12 @@ public class SalesorderController extends BaseController {
 
     @Autowired
     CustomerService customerService;
-    
+
     @Autowired
     AssembleService assembleService;
+
+    @Autowired
+    private SalesorderDetailRepository salesorderDetailRepository;
 
     @GetMapping("v1/salesorder")
     ResponseEntity<?> getSalesorder(@RequestParam String salesorderNo) {
@@ -186,9 +192,20 @@ public class SalesorderController extends BaseController {
             salesorder.setStatus(salesorderDto.getStatus());
         }
 
-        //update salesorder_details
+        //check if there is a remove items
+        Map<Integer, SalesorderDetailDto> updatedDetailMap = salesorderDto.getDetails().stream().filter(detail -> detail.getId() != null).collect(Collectors.toMap(SalesorderDetailDto::getId, detail -> detail));
+        Iterator<SalesorderDetail> iterator = salesorder.getDetails().iterator();
+        while (iterator.hasNext()) {
+            SalesorderDetail existingDetail = iterator.next();
+            if (!updatedDetailMap.containsKey(existingDetail.getId())) {
+                iterator.remove();
+                salesorderDetailRepository.delete(existingDetail);
+            }
+        }
+
+        //update salesorder details
         for (SalesorderDetailDto detailDto : salesorderDto.getDetails()) {
-            var detail = salesorder.getDetails().stream().filter(d -> d.getId().equals(detailDto.getId())).findFirst().orElse(null);
+            SalesorderDetail detail = salesorder.getDetails().stream().filter(d -> d.getId().equals(detailDto.getId())).findFirst().orElse(null);
             var item = itemService.findByCode(detailDto.getItem().getCode());
             var inventory = inventoryService.findByItemIdAndItemType(item.getId(), item.getCategory());
             List<Assemble> assembleTransactions = assembleService.findByFinishProductId(item.getId()).stream().sorted(Comparator.comparing(Assemble::getExpiryDate)).collect(Collectors.toList());
@@ -206,19 +223,37 @@ public class SalesorderController extends BaseController {
             if ((inventory.getInQuantity() - inventory.getOutQuantity()) < detailDto.getOrderQuantity()) {
                 return ResponseEntity.status(404).body("Cannot deliver more than available quantity.");
             }
-
-            //salesorder details
+            
+            //update salesorder details item
+            double availableStock = inventory.getInQuantity() - inventory.getOutQuantity();
+            if (detail == null) {
+                detail = new SalesorderDetail();
+                detail.setSalesorder(salesorder);
+                salesorder.getDetails().add(detail);
+            }
+            detail.setItem(item);
             if (detailDto.getOrderQuantity() <= 0) {
                 return ResponseEntity.status(404).body("Quantity should be greater than zero.");
             }
             detail.setOrderQuantity(detailDto.getOrderQuantity());
+            detail.setStockQuantity(availableStock);
             if (detailDto.getItemPrice() != null) {
                 detail.setItemPrice(detailDto.getItemPrice());
             }
             detail.setAmount(detail.getOrderQuantity() * detail.getItemPrice());
-            inventory.setOutQuantity(inventory.getOutQuantity() + detailDto.getOrderQuantity());
-            inventoryService.save(inventory);
-
+            
+            //update inventory
+            if (TransactionStatusEnum.COMPLETED.equals(salesorderDto.getStatus())) {
+                if (inventory == null) {
+                    inventory = new Inventory();
+                    inventory.setItem(item);
+                    inventory.setItemType(item.getCategory());
+                    inventory.setInQuantity(0.0);
+                }
+                inventory.setOutQuantity(inventory.getOutQuantity() + detailDto.getOrderQuantity());
+                inventoryService.save(inventory);
+            }
+            
             //update issued quantity on assemble to implement FIFO    
             double remainingRequired = detailDto.getOrderQuantity();
             for (Assemble assemble : assembleTransactions) {

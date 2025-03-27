@@ -211,9 +211,6 @@ public class SalesorderController extends BaseController {
             List<Assemble> assembleTransactions = assembleService.findByFinishProductId(item.getId()).stream().sorted(Comparator.comparing(Assemble::getExpiryDate)).collect(Collectors.toList());
 
             //validations
-            if (detail == null) {
-                return ResponseEntity.status(404).body("Sales order detail not found.");
-            }
             if (item == null) {
                 return ResponseEntity.status(404).body("Item does not exist: " + detailDto.getItem().getCode());
             }
